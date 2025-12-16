@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Button from '@/components/elements/Button';
 import Input from '@/components/elements/Input';
-import { login } from '../api/login';
+import { login } from '../actions/login';
 import { LoginCredentials } from '../types';
 
 export default function LoginForm() {
