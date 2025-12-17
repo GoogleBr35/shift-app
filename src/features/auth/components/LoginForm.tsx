@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import Button from '@/components/elements/Button';
-import Input from '@/components/elements/Input';
+import { Button, Input } from '@/components/elements';
 import { login } from '../actions/login';
 import { LoginCredentials } from '../types';
+import { useRouter } from 'next/navigation';
 
 export default function LoginForm() {
+    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState<LoginCredentials>({
@@ -34,7 +35,7 @@ export default function LoginForm() {
 
             if (result.success) {
                 // ログイン成功時、メニュー画面へ遷移
-                // router.push('/menu');
+                router.push('/menu');
             } else {
                 setError(result.message || 'ログインに失敗しました');
             }
