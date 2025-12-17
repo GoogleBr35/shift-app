@@ -1,18 +1,18 @@
 'use server';
 
 import 'server-only';
+import { cookies } from 'next/headers';
+import { signToken } from '@/lib/jwt';
 import { LoginCredentials, AuthResponse } from '../types';
 
 /**
  * ログイン認証を行うServer Action
  *
- * @param credentials - IDとパスワード
+ * @param formData - ログインフォームの入力データ
  * @returns 認証結果
  */
-export async function login(
-    credentials: LoginCredentials
-): Promise<AuthResponse> {
-    const { id, password } = credentials;
+export async function login(formData: LoginCredentials): Promise<AuthResponse> {
+    const { id, password } = formData;
 
     // バリデーション
     if (!id || !password) {
@@ -36,6 +36,19 @@ export async function login(
 
         // 認証成功
         if (id === adminId && password === adminPassword) {
+            // JWTを生成（署名）
+            const token = await signToken({ sub: 'admin' });
+
+            // Cookieを設定
+            const cookieStore = await cookies();
+            cookieStore.set('auth_token', token, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'strict',
+                path: '/',
+                maxAge: 60 * 30,
+            });
+
             return {
                 success: true,
             };
