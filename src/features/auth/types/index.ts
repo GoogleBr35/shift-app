@@ -1,15 +1,15 @@
 /**
  * ログインフォームの入力データ
  */
-export interface LoginCredentials {
+export type LoginCredentials = {
     id: string;
     password: string;
-}
+};
 
 /**
  * 認証APIのレスポンス
  */
-export interface AuthResponse {
+export type AuthResponse = {
     success: boolean;
     message?: string;
-}
+};
