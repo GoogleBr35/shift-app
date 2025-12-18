@@ -1,3 +1,3 @@
 export { default as Button } from './Button';
 export { default as Input } from './Input';
-export { default as MenuCard } from './MenuCard';
+export { default as RouterCard } from './RouterCard';
