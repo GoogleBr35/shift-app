@@ -1,11 +1,7 @@
 import 'server-only';
 import { SignJWT, jwtVerify } from 'jose';
 
-const SECRET_KEY = process.env.ADMIN_PASSWORD;
-if (!SECRET_KEY) {
-    throw new Error('ADMIN_PASSWORD is not defined');
-}
-const secret = new TextEncoder().encode(SECRET_KEY);
+const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 const alg = 'HS256';
 
 // JWTペイロードの型（型安全に定義）
