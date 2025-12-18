@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { signToken } from '@/lib/jwt';
 import { LoginCredentials, AuthResponse } from '../types';
@@ -24,18 +25,25 @@ export async function login(formData: LoginCredentials): Promise<AuthResponse> {
 
     try {
         const adminId = process.env.ADMIN_ID;
-        const adminPassword = process.env.ADMIN_PASSWORD;
+        const hashedAdminPassword = process.env.HASHED_ADMIN_PASSWORD;
 
         // 環境変数が設定されていない場合はログイン不可
-        if (!adminId || !adminPassword) {
+        if (!adminId || !hashedAdminPassword) {
             return {
                 success: false,
                 message: 'システムエラーが発生しました',
             };
         }
 
+        // IDとパスワードの一致を検証
+        const isIdMatch = id === adminId;
+        const isPasswordMatch = await bcrypt.compare(
+            password,
+            hashedAdminPassword
+        );
+
         // 認証成功
-        if (id === adminId && password === adminPassword) {
+        if (isIdMatch && isPasswordMatch) {
             // JWTを生成（署名）
             const token = await signToken({ sub: 'admin' });
 
