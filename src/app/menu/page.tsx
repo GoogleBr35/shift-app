@@ -25,6 +25,14 @@ export default function Menu() {
                         path=""
                     />
                 </CenterCardLayout>
+                <CenterCardLayout>
+                    <RouterCard
+                        title="メンバーの追加・削除"
+                        description="メンバーを追加したり削除したりできます。"
+                        label="編集"
+                        path="/member"
+                    />
+                </CenterCardLayout>
             </main>
         </>
     );
