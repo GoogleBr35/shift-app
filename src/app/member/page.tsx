@@ -1,5 +1,5 @@
 import Header from '@/components/layouts/Header';
-import { MemberList } from '@/features/member/components/memberList';
+import { MemberList } from '@/features/member/components/MemberList';
 
 export default function Member() {
     return (

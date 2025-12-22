@@ -1,7 +1,8 @@
 import React from 'react';
 import { getMember } from '@/lib/GoogleSheets/getMember';
-import { Member } from './member';
+import { Member } from './Member';
 import { Accordion } from '@/components/elements';
+import { AddMemberInput } from './AddMemberInput';
 
 export const MemberList = async () => {
     const memberData = await getMember();
@@ -31,6 +32,7 @@ export const MemberList = async () => {
                                     <Member
                                         key={`${category.key}-${index}`}
                                         name={name}
+                                        categoryKey={category.key}
                                     />
                                 ))}
                             </div>
@@ -39,6 +41,7 @@ export const MemberList = async () => {
                                 メンバーがいません
                             </div>
                         )}
+                        <AddMemberInput categoryKey={category.key} />
                     </Accordion>
                 );
             })}
