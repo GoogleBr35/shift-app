@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyToken } from '@/lib/jwt';
+import { verifyToken } from '@/lib/jose/jwt';
 
 export async function proxy(request: NextRequest) {
     const token = request.cookies.get('auth_token')?.value; // Cookieからトークンを取得

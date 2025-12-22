@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button, Input } from '@/components/elements';
-import { login } from '@/features/auth/actions/login';
+import { login } from '@/features/auth/api/login';
 import { LoginCredentials } from '@/features/auth/types';
 import { useRouter } from 'next/navigation';
 

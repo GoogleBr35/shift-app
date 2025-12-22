@@ -3,7 +3,7 @@
 import 'server-only';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
-import { signToken } from '@/lib/jwt';
+import { signToken } from '@/lib/jose/jwt';
 import { LoginCredentials, AuthResponse } from '../types';
 
 /**
