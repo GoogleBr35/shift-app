@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createShiftSheet } from '../../actions/createShiftSheet';
 import RouterCard from '@/components/elements/RouterCard';
 import { CalendarGrid } from './CalendarGrid';
 import { CalendarHeader } from './CalendarHeader';
@@ -52,11 +53,10 @@ export default function DateRangeSelector() {
     };
 
     // 決定のクリック時
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (startDate && endDate) {
-            const startStr = formatDate(startDate);
-            const endStr = formatDate(endDate);
-            console.log(startStr, endStr);
+            // Server Actionを呼び出し
+            await createShiftSheet(startDate, endDate);
         }
     };
 
