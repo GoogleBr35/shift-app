@@ -1,7 +1,8 @@
 import Header from '@/components/layouts/Header';
 import CenterCardLayout from '@/components/layouts/CenterCardLayout';
+import { ShareUrlCard } from '@/features/newshift/components/ShareUrlCard';
 
-export default function NewShift() {
+export default function shareUrl() {
     return (
         <>
             <header>
@@ -9,7 +10,9 @@ export default function NewShift() {
             </header>
             <main>
                 <CenterCardLayout>
-                    <h1>共有URL</h1>
+                    <ShareUrlCard
+                        spreadsheetId={process.env.MASTER_SHEET_ID ?? ''}
+                    />
                 </CenterCardLayout>
             </main>
         </>
