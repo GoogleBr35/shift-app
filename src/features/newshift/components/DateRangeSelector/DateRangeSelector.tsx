@@ -62,7 +62,7 @@ export default function DateRangeSelector() {
         try {
             const result = await createShiftSheet(startDate, endDate);
             if (result.success) {
-                router.push('/shareURL');
+                router.push(`/newshift/shareUrl?sheet=${result.sheetName}`);
             } else {
                 alert(result.error ?? 'シフト表の作成に失敗しました');
             }
