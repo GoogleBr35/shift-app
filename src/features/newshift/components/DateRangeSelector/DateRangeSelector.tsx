@@ -1,15 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createShiftSheet } from '../../actions/createShiftSheet';
 import RouterCard from '@/components/elements/RouterCard';
 import { CalendarGrid } from './CalendarGrid';
 import { CalendarHeader } from './CalendarHeader';
 
 export default function DateRangeSelector() {
+    const router = useRouter();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [startDate, setStartDate] = useState<Date | null>(null);
     const [endDate, setEndDate] = useState<Date | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     // 日付クリック時 (日付選択ロジック)
     const handleDateClick = (date: Date) => {
@@ -54,9 +57,19 @@ export default function DateRangeSelector() {
 
     // 決定のクリック時
     const handleConfirm = async () => {
-        if (startDate && endDate) {
-            // Server Actionを呼び出し
-            await createShiftSheet(startDate, endDate);
+        if (!startDate || !endDate) return;
+        setIsLoading(true);
+        try {
+            const result = await createShiftSheet(startDate, endDate);
+            if (result.success) {
+                router.push('/shareURL');
+            } else {
+                alert(result.error ?? 'シフト表の作成に失敗しました');
+            }
+        } catch {
+            alert('シフト表の作成に失敗しました');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -84,9 +97,8 @@ export default function DateRangeSelector() {
                         ? `開始: ${formatDate(startDate)}\n終了: ${formatDate(endDate)}`
                         : 'カレンダーから開始日と終了日を選択してください'
                 }
-                label="決定"
-                buttonDisabled={!startDate || !endDate}
-                path="/"
+                label={isLoading ? '作成中...' : '決定'}
+                buttonDisabled={!startDate || !endDate || isLoading}
                 onClick={handleConfirm}
             />
         </div>
