@@ -7,6 +7,7 @@ import type { MemberData } from '@/lib/GoogleSheets/getMember';
 type NameSelectorProps = {
     sheetName: string;
     memberList: MemberData;
+    token: string;
 };
 
 type CategoryKey = keyof MemberData;
@@ -18,7 +19,8 @@ const categoryLabels: Record<CategoryKey, string> = {
     DinnerPartTime: 'ディナー アルバイト',
 };
 
-export const NameSelector = ({ sheetName, memberList }: NameSelectorProps) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const NameSelector = ({ sheetName, memberList, token }: NameSelectorProps) => {
     const [selectedName, setSelectedName] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(null);
 
