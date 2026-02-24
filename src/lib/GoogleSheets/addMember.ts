@@ -1,7 +1,7 @@
 'use server';
 
 import { getGoogleSheets } from '@/lib/GoogleSheets/google';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 /**
  * メンバーを追加するサーバーアクション
@@ -43,6 +43,7 @@ export const addMember = async (name: string, category: string) => {
 
         // データの更新を画面に反映させるためキャッシュをパージ
         revalidatePath('/member');
+        revalidateTag('member-list', 'default');
         return { success: true };
     } catch (error) {
         return {

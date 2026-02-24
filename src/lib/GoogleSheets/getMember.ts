@@ -1,6 +1,7 @@
 'use server';
 
 import { getGoogleSheets } from '@/lib/GoogleSheets/google';
+import { unstable_cache } from 'next/cache';
 
 export type MemberData = {
     LunchStaff: string[];
@@ -9,7 +10,7 @@ export type MemberData = {
     DinnerPartTime: string[];
 };
 
-export const getMember = async (): Promise<MemberData> => {
+const fetchMember = async (): Promise<MemberData> => {
     try {
         const doc = await getGoogleSheets();
         const sheet = doc.sheetsByTitle['MemberList'];
@@ -62,3 +63,8 @@ export const getMember = async (): Promise<MemberData> => {
         };
     }
 };
+
+export const getMember = unstable_cache(fetchMember, ['member-list'], {
+    tags: ['member-list'],
+});
+

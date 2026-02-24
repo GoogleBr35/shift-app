@@ -19,14 +19,6 @@ export default function Menu() {
                 </CenterCardLayout>
                 <CenterCardLayout>
                     <RouterCard
-                        title="提出締め切り"
-                        description="現在提出可能なシフトの提出を締め切ります。"
-                        label="締切"
-                        path=""
-                    />
-                </CenterCardLayout>
-                <CenterCardLayout>
-                    <RouterCard
                         title="メンバーの追加・削除"
                         description="メンバーを追加したり削除したりできます。"
                         label="編集"

@@ -1,7 +1,7 @@
 'use server';
 
 import { getGoogleSheets } from '@/lib/GoogleSheets/google';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 /**
  * メンバーを削除するサーバーアクション
@@ -71,6 +71,7 @@ export const deleteMember = async (name: string, category: string) => {
         await sheet.saveUpdatedCells();
         // 画面更新
         revalidatePath('/member');
+        revalidateTag('member-list', 'default');
         return { success: true };
     } catch (error) {
         if (process.env.NODE_ENV === 'development') {
