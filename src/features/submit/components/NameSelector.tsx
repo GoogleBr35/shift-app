@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/elements';
+import { Button, Spinner } from '@/components/elements';
 import type { MemberData } from '@/lib/GoogleSheets/getMember';
+import { getShiftColumns } from '@/lib/GoogleSheets/getShiftColumns';
+import { getStaffShift } from '@/lib/GoogleSheets/getStaffShift';
+import { ShiftInput } from './ShiftInput';
 
 type NameSelectorProps = {
     sheetName: string;
@@ -12,6 +15,13 @@ type NameSelectorProps = {
 
 type CategoryKey = keyof MemberData;
 
+type ShiftData = {
+    columns: { index: number; date: string }[];
+    initialShifts: { colIndex: number; date: string; value: string }[];
+};
+
+type Step = 'select' | 'loading' | 'input' | 'complete';
+
 const categoryLabels: Record<CategoryKey, string> = {
     LunchStaff: 'ランチ 社員',
     LunchPartTime: 'ランチ アルバイト',
@@ -19,10 +29,11 @@ const categoryLabels: Record<CategoryKey, string> = {
     DinnerPartTime: 'ディナー アルバイト',
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const NameSelector = ({ sheetName, memberList, token }: NameSelectorProps) => {
     const [selectedName, setSelectedName] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(null);
+    const [step, setStep] = useState<Step>('select');
+    const [shiftData, setShiftData] = useState<ShiftData | null>(null);
 
     const dateRange = sheetName.replace('_', ' 〜 ');
 
@@ -31,16 +42,71 @@ export const NameSelector = ({ sheetName, memberList, token }: NameSelectorProps
         setSelectedCategory(category);
     };
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (!selectedName || !selectedCategory) return;
-        // TODO: シフト入力画面へ遷移
-        alert(`${selectedName}（${categoryLabels[selectedCategory]}）を選択しました`);
+
+        setStep('loading');
+        try {
+            const { columns } = await getShiftColumns(sheetName);
+            const { shifts } = await getStaffShift(sheetName, selectedName, columns);
+            setShiftData({ columns, initialShifts: shifts });
+            setStep('input');
+        } catch {
+            alert('データの取得に失敗しました');
+            setStep('select');
+        }
+    };
+
+    const handleSubmitComplete = () => {
+        setStep('complete');
     };
 
     const categories = (Object.keys(categoryLabels) as CategoryKey[]).filter(
         (key) => memberList[key].length > 0
     );
 
+    // Step: loading
+    if (step === 'loading') {
+        return (
+            <div className="w-full max-w-md flex flex-col items-center gap-4 py-12">
+                <Spinner size="lg" />
+                <p className="text-gray-500">データを読み込んでいます...</p>
+            </div>
+        );
+    }
+
+    // Step: input
+    if (step === 'input' && shiftData && selectedName) {
+        return (
+            <ShiftInput
+                token={token}
+                sheetName={sheetName}
+                staffName={selectedName}
+                columns={shiftData.columns}
+                initialShifts={shiftData.initialShifts}
+                onSubmitComplete={handleSubmitComplete}
+            />
+        );
+    }
+
+    // Step: complete
+    if (step === 'complete') {
+        return (
+            <div className="w-full max-w-md flex flex-col items-center gap-6 py-8">
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">提出完了</h2>
+                <p className="text-gray-500 text-sm text-center">
+                    {selectedName}さんのシフトを提出しました。
+                </p>
+            </div>
+        );
+    }
+
+    // Step: select (default)
     return (
         <div className="w-full max-w-md flex flex-col items-center gap-6">
             <div className="w-full rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
