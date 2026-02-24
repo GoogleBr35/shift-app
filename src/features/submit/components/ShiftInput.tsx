@@ -18,7 +18,7 @@ type ShiftInputProps = {
     staffName: string;
     columns: { index: number; date: string }[];
     initialShifts: { colIndex: number; date: string; value: string }[];
-    onSubmitComplete: () => void;
+    onSubmitComplete: (submittedShifts: { date: string; value: string }[]) => void;
 };
 
 /** 時間を hh.m 形式に変換 */
@@ -123,7 +123,11 @@ export const ShiftInput = ({
 
             const result = await submitShift(token, staffName, shiftEntries);
             if (result.success) {
-                onSubmitComplete();
+                const submittedData = columns.map((col) => {
+                    const sv = shifts[col.date];
+                    return { date: col.date, value: sv ? shiftToString(sv) : '' };
+                });
+                onSubmitComplete(submittedData);
             } else {
                 alert(result.error ?? 'シフトの提出に失敗しました');
             }
