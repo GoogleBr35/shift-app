@@ -4,6 +4,11 @@ vi.mock('@/lib/GoogleSheets/google', () => ({
     getGoogleSheets: vi.fn(),
 }));
 
+// unstable_cache はコールバックをそのまま返すモック
+vi.mock('next/cache', () => ({
+    unstable_cache: (fn: (...args: unknown[]) => unknown) => fn,
+}));
+
 import { getMember } from './getMember';
 import { getGoogleSheets } from './google';
 

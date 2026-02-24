@@ -6,6 +6,7 @@ vi.mock('@/lib/GoogleSheets/google', () => ({
 
 vi.mock('next/cache', () => ({
     revalidatePath: vi.fn(),
+    revalidateTag: vi.fn(),
 }));
 
 import { deleteMember } from './deleteMember';

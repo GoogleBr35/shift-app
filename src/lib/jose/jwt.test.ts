@@ -53,9 +53,10 @@ describe('verifyToken', () => {
     it('改ざんされたトークンで null を返す', async () => {
         const payload: JWTPayload = { sub: 'admin' };
         const token = await signToken(payload);
-        // トークンの最後の文字を変更して改ざんを模擬
-        const tamperedToken =
-            token.slice(0, -1) + (token.endsWith('A') ? 'B' : 'A');
+        // シグネチャ部分を完全に置き換えて改ざんを模擬
+        const parts = token.split('.');
+        parts[2] = 'invalid-signature-data';
+        const tamperedToken = parts.join('.');
         const result = await verifyToken(tamperedToken);
         expect(result).toBeNull();
     });
@@ -78,8 +79,10 @@ describe('signSubmitToken / verifySubmitToken', () => {
 
     it('改ざんされたトークンで null を返す', async () => {
         const token = await signSubmitToken('sheet1', 7);
-        const tamperedToken =
-            token.slice(0, -1) + (token.endsWith('A') ? 'B' : 'A');
+        // シグネチャ部分を完全に置き換えて改ざんを模擬
+        const parts = token.split('.');
+        parts[2] = 'invalid-signature-data';
+        const tamperedToken = parts.join('.');
         const result = await verifySubmitToken(tamperedToken);
         expect(result).toBeNull();
     });
