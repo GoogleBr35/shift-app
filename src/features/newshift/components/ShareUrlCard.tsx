@@ -5,21 +5,15 @@ import { useSearchParams } from 'next/navigation';
 import { Button, Input } from '@/components/elements';
 import { useRouter } from 'next/navigation';
 
-type ShareUrlCardProps = {
-    spreadsheetId: string;
-};
-
-export const ShareUrlCard = ({ spreadsheetId }: ShareUrlCardProps) => {
+export const ShareUrlCard = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [copied, setCopied] = useState(false);
 
     const sheetName = searchParams.get('sheet') ?? '';
-    /******************/
-    const url = spreadsheetId
-        ? `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`
+    const url = sheetName
+        ? `${window.location.origin}/submit/${sheetName}`
         : '';
-    /******************/
 
     const handleCopy = async () => {
         try {

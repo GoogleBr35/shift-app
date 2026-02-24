@@ -2,7 +2,7 @@ import Header from '@/components/layouts/Header';
 import CenterCardLayout from '@/components/layouts/CenterCardLayout';
 import { ShareUrlCard } from '@/features/newshift/components/ShareUrlCard';
 
-export default function shareUrl() {
+export default function ShareUrl() {
     return (
         <>
             <header>
@@ -10,9 +10,7 @@ export default function shareUrl() {
             </header>
             <main>
                 <CenterCardLayout>
-                    <ShareUrlCard
-                        spreadsheetId={process.env.MASTER_SHEET_ID ?? ''}
-                    />
+                    <ShareUrlCard />
                 </CenterCardLayout>
             </main>
         </>

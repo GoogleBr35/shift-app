@@ -5,12 +5,13 @@ import { verifyToken } from '@/lib/jose/jwt';
 export async function proxy(request: NextRequest) {
     const token = request.cookies.get('auth_token')?.value; // Cookieからトークンを取得
     const isLoginPage = request.nextUrl.pathname === '/'; // ログインページかどうか
+    const isPublicPage = request.nextUrl.pathname.startsWith('/submit'); // 公開ページかどうか
 
     const payload = token ? await verifyToken(token) : null; // トークンを検証
     const isValid = !!payload; // トークンが有効かどうか
 
-    // 未認証（トークンなし or 検証失敗）かつ、ログインページ以外へのアクセス
-    if (!isValid && !isLoginPage) {
+    // 未認証（トークンなし or 検証失敗）かつ、ログインページ・公開ページ以外へのアクセス
+    if (!isValid && !isLoginPage && !isPublicPage) {
         return NextResponse.redirect(new URL('/', request.url));
     }
 
