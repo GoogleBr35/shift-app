@@ -2,6 +2,7 @@
 
 import { getGoogleSheets } from '@/lib/GoogleSheets/google';
 import { getMember } from '@/lib/GoogleSheets/getMember';
+import { signSubmitToken } from '@/lib/jose/jwt';
 import { format, eachDayOfInterval, isMonday, getDay } from 'date-fns';
 
 // --- Helper Types ---
@@ -209,7 +210,8 @@ export const createShiftSheet = async (startDate: Date, endDate: Date) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (doc as any)._makeBatchUpdateRequest(requests);
 
-        return { success: true, sheetName };
+        const token = await signSubmitToken(sheetName, 7);
+        return { success: true, sheetName, token };
     } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error creating shift sheet:', error);

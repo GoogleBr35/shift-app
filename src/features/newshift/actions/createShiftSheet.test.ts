@@ -8,6 +8,10 @@ vi.mock('@/lib/GoogleSheets/getMember', () => ({
     getMember: vi.fn(),
 }));
 
+vi.mock('@/lib/jose/jwt', () => ({
+    signSubmitToken: vi.fn().mockResolvedValue('test-jwt-token'),
+}));
+
 import { createShiftSheet } from './createShiftSheet';
 import { getGoogleSheets } from '@/lib/GoogleSheets/google';
 import { getMember } from '@/lib/GoogleSheets/getMember';
@@ -65,6 +69,7 @@ describe('createShiftSheet', () => {
 
         expect(result.success).toBe(true);
         expect(result.sheetName).toBe('2026-02-23_2026-02-28');
+        expect(result.token).toBe('test-jwt-token');
         expect(doc.addSheet).toHaveBeenCalledWith({ title: '2026-02-23_2026-02-28' });
         expect(doc._makeBatchUpdateRequest).toHaveBeenCalled();
     });

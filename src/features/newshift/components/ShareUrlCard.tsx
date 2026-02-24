@@ -4,15 +4,28 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button, Input } from '@/components/elements';
 import { useRouter } from 'next/navigation';
+import { decodeJwt } from 'jose';
 
 export const ShareUrlCard = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [copied, setCopied] = useState(false);
 
-    const sheetName = searchParams.get('sheet') ?? '';
-    const url = sheetName
-        ? `${window.location.origin}/submit/${sheetName}`
+    const token = searchParams.get('token') ?? '';
+
+    // JWT ペイロードから sheetName をデコード（表示用、検証不要）
+    let sheetName = '';
+    try {
+        if (token) {
+            const payload = decodeJwt(token);
+            sheetName = (payload.sheetName as string) ?? '';
+        }
+    } catch {
+        // デコード失敗時は空文字のまま
+    }
+
+    const url = token
+        ? `${window.location.origin}/submit?token=${token}`
         : '';
 
     const handleCopy = async () => {
