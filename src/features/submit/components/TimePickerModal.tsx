@@ -70,7 +70,7 @@ export const TimePickerModal = ({
 
                         {/* Start Time */}
                         <div className="flex items-center gap-2">
-                            <HourInput value={startHour} onChange={setStartHour} />
+                            <HourInput value={startHour} onChange={setStartHour} min={8} max={24} />
                             <span className="text-2xl font-bold">:</span>
                             <MinuteSelect value={startMinute} onChange={setStartMinute} />
                         </div>
@@ -79,7 +79,7 @@ export const TimePickerModal = ({
 
                         {/* End Time */}
                         <div className="flex items-center gap-2">
-                            <HourInput value={endHour} onChange={setEndHour} />
+                            <HourInput value={endHour} onChange={setEndHour} min={11} max={29} />
                             <span className="text-2xl font-bold">:</span>
                             <MinuteSelect value={endMinute} onChange={setEndMinute} />
                         </div>
@@ -143,28 +143,30 @@ export const TimePickerModal = ({
     );
 };
 
-/** 時（0-23）の入力 */
+/** 時の選択 */
 const HourInput = ({
     value,
     onChange,
+    min,
+    max,
 }: {
     value: number;
     onChange: (v: number) => void;
+    min: number;
+    max: number;
 }) => (
-    <input
-        type="number"
-        min={0}
-        max={23}
+    <select
         value={value}
-        onChange={(e) => {
-            const v = parseInt(e.target.value, 10);
-            if (!isNaN(v) && v >= 0 && v <= 23) onChange(v);
-        }}
+        onChange={(e) => onChange(parseInt(e.target.value, 10))}
         className="w-16 h-16 text-3xl font-bold text-center border-2 border-gray-200 rounded-xl
-                   focus:outline-none focus:border-gray-800 appearance-none
-                   [&::-webkit-inner-spin-button]:appearance-none
-                   [&::-webkit-outer-spin-button]:appearance-none"
-    />
+                   focus:outline-none focus:border-gray-800 appearance-none bg-white cursor-pointer"
+    >
+        {Array.from({ length: max - min + 1 }, (_, i) => (
+            <option key={min + i} value={min + i}>
+                {min + i}
+            </option>
+        ))}
+    </select>
 );
 
 /** 分（00 / 30）のセレクト */
@@ -175,19 +177,13 @@ const MinuteSelect = ({
     value: number;
     onChange: (v: number) => void;
 }) => (
-    <div className="relative">
-        <select
-            value={value}
-            onChange={(e) => onChange(parseInt(e.target.value, 10))}
-            className="w-16 h-16 text-3xl font-bold text-center border-2 border-gray-200 rounded-xl
-                       focus:outline-none focus:border-gray-800 appearance-none bg-white cursor-pointer"
-        >
-            <option value={0}>00</option>
-            <option value={30}>30</option>
-        </select>
-        <div className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none flex flex-col text-gray-400">
-            <span className="text-xs leading-none">▲</span>
-            <span className="text-xs leading-none">▼</span>
-        </div>
-    </div>
+    <select
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value, 10))}
+        className="w-16 h-16 text-3xl font-bold text-center border-2 border-gray-200 rounded-xl
+                   focus:outline-none focus:border-gray-800 appearance-none bg-white cursor-pointer"
+    >
+        <option value={0}>00</option>
+        <option value={30}>30</option>
+    </select>
 );
