@@ -211,6 +211,24 @@ export const createShiftSheet = async (startDate: Date, endDate: Date) => {
         await (doc as any)._makeBatchUpdateRequest(requests);
 
         const token = await signSubmitToken(sheetName, 7);
+
+        // TokenStore シートにトークンを保存
+        let tokenSheet = doc.sheetsByTitle['TokenStore'];
+        if (!tokenSheet) {
+            tokenSheet = await doc.addSheet({
+                title: 'TokenStore',
+                headerValues: ['sheetName', 'token'],
+            });
+        }
+        const tokenRows = await tokenSheet.getRows();
+        const existingRow = tokenRows.find((r) => r.get('sheetName') === sheetName);
+        if (existingRow) {
+            existingRow.set('token', token);
+            await existingRow.save();
+        } else {
+            await tokenSheet.addRow({ sheetName, token });
+        }
+
         return { success: true, sheetName, token };
     } catch (error) {
         // eslint-disable-next-line no-console

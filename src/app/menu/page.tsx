@@ -25,6 +25,14 @@ export default function Menu() {
                         path="/member"
                     />
                 </CenterCardLayout>
+                <CenterCardLayout>
+                    <RouterCard
+                        title="提出状況確認"
+                        description="シフトの提出状況を確認できます。"
+                        label="確認"
+                        path="/status"
+                    />
+                </CenterCardLayout>
             </main>
         </>
     );

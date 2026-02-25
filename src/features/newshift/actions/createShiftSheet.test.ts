@@ -30,6 +30,10 @@ describe('createShiftSheet', () => {
     function createMockDoc(options?: { existingSheet?: boolean }) {
         const mockDelete = vi.fn();
         const mockNewSheet = { sheetId: 200 };
+        const mockTokenSheet = {
+            getRows: vi.fn().mockResolvedValue([]),
+            addRow: vi.fn().mockResolvedValue({}),
+        };
         const sheetsByTitle: Record<string, unknown> = {
             Templates: { sheetId: 100 },
         };
@@ -37,10 +41,18 @@ describe('createShiftSheet', () => {
             sheetsByTitle['2026-02-23_2026-02-28'] = { delete: mockDelete };
         }
 
+        const addSheet = vi.fn().mockImplementation(async (opts: { title: string }) => {
+            if (opts.title === 'TokenStore') {
+                sheetsByTitle['TokenStore'] = mockTokenSheet;
+                return mockTokenSheet;
+            }
+            return mockNewSheet;
+        });
+
         return {
             doc: {
                 sheetsByTitle,
-                addSheet: vi.fn().mockResolvedValue(mockNewSheet),
+                addSheet,
                 _makeBatchUpdateRequest: vi.fn().mockResolvedValue(undefined),
             },
             mockDelete,
