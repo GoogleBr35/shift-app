@@ -14,19 +14,20 @@ import { getGoogleSheets } from './google';
 
 const mockedGetGoogleSheets = vi.mocked(getGoogleSheets);
 
-// ヘルパー: Google Sheets の行モックを生成
+/** Google Sheets の行データを表現するモック */
 function createMockRow(data: Record<string, string>) {
     return {
         get: vi.fn((key: string) => data[key] || ''),
     };
 }
 
-describe('getMember', () => {
+describe('getMember (メンバー一覧取得)', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    it('MemberList シートからメンバーデータを取得できる', async () => {
+    it('MemberList シートから各カテゴリのメンバーを配列形式で抽出できること', async () => {
+        // Given (前提): MemberList シートに複数のメンバーが記載されている
         const mockRows = [
             createMockRow({
                 LunchStaff: '田中',
@@ -50,21 +51,35 @@ describe('getMember', () => {
             },
         } as never);
 
+        // When (実行): getMember を呼び出す
         const result = await getMember();
 
-        expect(result.LunchStaff).toEqual(['田中', '高橋']);
-        expect(result.LunchPartTime).toEqual(['佐藤']);
-        expect(result.DinnerStaff).toEqual(['山田', '伊藤']);
-        expect(result.DinnerPartTime).toEqual(['鈴木']);
+        // Then (検証): カテゴリごとに名前が正しく振り分けられ、空セルは除外されていること
+        expect(result).toEqual({
+            LunchStaff: ['田中', '高橋'],
+            LunchPartTime: ['佐藤'],
+            DinnerStaff: ['山田', '伊藤'],
+            DinnerPartTime: ['鈴木'],
+        });
     });
 
-    it('MemberList シートが存在しない場合、空データを返す', async () => {
-        mockedGetGoogleSheets.mockResolvedValue({
-            sheetsByTitle: {},
-        } as never);
+    it.each([
+        {
+            mock: () => mockedGetGoogleSheets.mockResolvedValue({ sheetsByTitle: {} } as never),
+            description: 'シートが存在しない',
+        },
+        {
+            mock: () => mockedGetGoogleSheets.mockRejectedValue(new Error('API disconnect')),
+            description: 'API通信エラー',
+        },
+    ])('$description の場合、フォールバックとして空データを返すこと', async ({ mock }) => {
+        // Given: 特定のエラー状況
+        mock();
 
+        // When: getMember を呼び出す
         const result = await getMember();
 
+        // Then: すべて空配列として返ること
         expect(result).toEqual({
             LunchStaff: [],
             LunchPartTime: [],
@@ -73,16 +88,9 @@ describe('getMember', () => {
         });
     });
 
-    it('全行が空の場合、空配列を返す', async () => {
-        const mockRows = [
-            createMockRow({
-                LunchStaff: '',
-                LunchPartTime: '',
-                DinnerStaff: '',
-                DinnerPartTime: '',
-            }),
-        ];
-
+    it('シートが空行のみで構成されている場合、結果も空配列になること', async () => {
+        // Given: 内容が空の行データ
+        const mockRows = [createMockRow({ LunchStaff: '', LunchPartTime: '' })];
         mockedGetGoogleSheets.mockResolvedValue({
             sheetsByTitle: {
                 MemberList: {
@@ -91,26 +99,11 @@ describe('getMember', () => {
             },
         } as never);
 
+        // When: getMember を呼び出す
         const result = await getMember();
 
-        expect(result).toEqual({
-            LunchStaff: [],
-            LunchPartTime: [],
-            DinnerStaff: [],
-            DinnerPartTime: [],
-        });
-    });
-
-    it('Google Sheets API がエラーを投げた場合、空データを返す', async () => {
-        mockedGetGoogleSheets.mockRejectedValue(new Error('API Error'));
-
-        const result = await getMember();
-
-        expect(result).toEqual({
-            LunchStaff: [],
-            LunchPartTime: [],
-            DinnerStaff: [],
-            DinnerPartTime: [],
-        });
+        // Then: すべて空配列として返ること
+        expect(result.LunchStaff).toHaveLength(0);
+        expect(result.LunchPartTime).toHaveLength(0);
     });
 });

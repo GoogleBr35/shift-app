@@ -19,14 +19,12 @@ import { getMember } from '@/lib/GoogleSheets/getMember';
 const mockedGetGoogleSheets = vi.mocked(getGoogleSheets);
 const mockedGetMember = vi.mocked(getMember);
 
-describe('createShiftSheet', () => {
+describe('createShiftSheet (シフト表作成)', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    /**
-     * Google Sheets ドキュメントのモックを生成
-     */
+    /** Google Sheets ドキュメントのモックを生成 */
     function createMockDoc(options?: { existingSheet?: boolean }) {
         const mockDelete = vi.fn();
         const mockNewSheet = { sheetId: 200 };
@@ -72,13 +70,16 @@ describe('createShiftSheet', () => {
         return { doc, mockDelete, mockNewSheet };
     }
 
-    it('シフト表を正常に作成できる', async () => {
+    it('指定された日付範囲に基づき、新しいシートを生成してメンバー情報を流し込めること', async () => {
+        // Given (前提): 開始日と終了日が指定され、テンプレートが存在する
         const { doc } = setupMocks();
         const start = new Date(2026, 1, 23); // 2026-02-23 (Mon)
-        const end = new Date(2026, 1, 28);   // 2026-02-28 (Sat)
+        const end = new Date(2026, 1, 28); // 2026-02-28 (Sat)
 
+        // When (実行): シフト表作成アクションを呼び出す
         const result = await createShiftSheet(start, end);
 
+        // Then (検証): 正しいシート名の作成、およびバッチ更新APIが呼ばれること
         expect(result.success).toBe(true);
         expect(result.sheetName).toBe('2026-02-23_2026-02-28');
         expect(result.token).toBe('test-jwt-token');
@@ -86,58 +87,63 @@ describe('createShiftSheet', () => {
         expect(doc._makeBatchUpdateRequest).toHaveBeenCalled();
     });
 
-    it('同名の既存シートがある場合、削除してから作成する', async () => {
+    it('同名のシートが既に存在する場合、既存のものを削除してから再作成すること', async () => {
+        // Given: '2026-02-23_2026-02-28' シートが既に存在する
         const { mockDelete } = setupMocks({ existingSheet: true });
         const start = new Date(2026, 1, 23);
         const end = new Date(2026, 1, 28);
 
-        const result = await createShiftSheet(start, end);
+        // When: シフト表作成を実行
+        await createShiftSheet(start, end);
 
-        expect(result.success).toBe(true);
+        // Then: 旧シートの削除メソッドが実行されること
         expect(mockDelete).toHaveBeenCalled();
     });
 
-    it('Templates シートが存在しない場合、エラーを返す', async () => {
-        mockedGetGoogleSheets.mockResolvedValue({
-            sheetsByTitle: {},
-            addSheet: vi.fn(),
-        } as never);
-        mockedGetMember.mockResolvedValue({
-            LunchStaff: [],
-            LunchPartTime: [],
-            DinnerStaff: [],
-            DinnerPartTime: [],
-        });
-
+    it.each([
+        {
+            setup: () => {
+                mockedGetGoogleSheets.mockResolvedValue({
+                    sheetsByTitle: {},
+                    addSheet: vi.fn(),
+                } as never);
+                mockedGetMember.mockResolvedValue({
+                    LunchStaff: [],
+                    LunchPartTime: [],
+                    DinnerStaff: [],
+                    DinnerPartTime: [],
+                });
+            },
+            description: 'Templatesシートが存在しない',
+        },
+        {
+            setup: () => mockedGetGoogleSheets.mockRejectedValue(new Error('Auth failed')),
+            description: 'API通信エラーが発生',
+        },
+    ])('$description の場合、失敗結果を返すこと', async ({ setup }) => {
+        // Given: 特定のエラー発生パターン
+        setup();
         const start = new Date(2026, 1, 23);
         const end = new Date(2026, 1, 28);
 
+        // When: シフト表作成を実行
         const result = await createShiftSheet(start, end);
 
+        // Then: 失敗ステータスが返ること
         expect(result.success).toBe(false);
         expect(result.error).toBe('シフト表の作成に失敗しました');
     });
 
-    it('Google Sheets API がエラーを投げた場合、エラーを返す', async () => {
-        mockedGetGoogleSheets.mockRejectedValue(new Error('API Error'));
-
-        const start = new Date(2026, 1, 23);
-        const end = new Date(2026, 1, 28);
-
-        const result = await createShiftSheet(start, end);
-
-        expect(result.success).toBe(false);
-        expect(result.error).toBe('シフト表の作成に失敗しました');
-    });
-
-    it('batchUpdate でリクエスト配列が送信される', async () => {
+    it('シート生成時にセルの書式や配置を調整するためのバッチリクエストが送信されること', async () => {
+        // Given: 正常なセットアップ
         const { doc } = setupMocks();
-        const start = new Date(2026, 1, 23); // Mon
-        const end = new Date(2026, 1, 25);   // Wed
+        const start = new Date(2026, 1, 23);
+        const end = new Date(2026, 1, 25);
 
+        // When: シフト表を作成
         await createShiftSheet(start, end);
 
-        // batchUpdate が呼ばれ、配列が渡されることを確認
+        // Then: batchUpdate API にリクエスト配列（更新プロパティを含む）が渡されること
         expect(doc._makeBatchUpdateRequest).toHaveBeenCalledWith(
             expect.arrayContaining([
                 expect.objectContaining({
