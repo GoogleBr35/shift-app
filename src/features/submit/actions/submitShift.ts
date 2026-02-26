@@ -57,6 +57,9 @@ export const submitShift = async (
         for (const entry of shifts) {
             const cell = sheet.getCell(staffRow, entry.colIndex);
             cell.value = entry.value;
+            // フォーマットを維持（中央揃え）
+            cell.horizontalAlignment = 'CENTER';
+            cell.verticalAlignment = 'MIDDLE';
         }
 
         await sheet.saveUpdatedCells();
