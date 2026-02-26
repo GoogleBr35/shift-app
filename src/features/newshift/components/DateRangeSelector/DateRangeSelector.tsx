@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
 import { createShiftSheet } from '../../actions/createShiftSheet';
 import RouterCard from '@/components/elements/RouterCard';
 import { CalendarGrid } from './CalendarGrid';
@@ -60,7 +61,9 @@ export default function DateRangeSelector() {
         if (!startDate || !endDate) return;
         setIsLoading(true);
         try {
-            const result = await createShiftSheet(startDate, endDate);
+            const formattedStart = format(startDate, 'yyyy-MM-dd');
+            const formattedEnd = format(endDate, 'yyyy-MM-dd');
+            const result = await createShiftSheet(formattedStart, formattedEnd);
             if (result.success) {
                 router.push(`/newshift/shareUrl?token=${result.token}`);
             } else {

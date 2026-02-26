@@ -77,7 +77,7 @@ describe('createShiftSheet (シフト表作成)', () => {
         const end = new Date(2026, 1, 28); // 2026-02-28 (Sat)
 
         // When (実行): シフト表作成アクションを呼び出す
-        const result = await createShiftSheet(start, end);
+        const result = await createShiftSheet('2026-02-23', '2026-02-28');
 
         // Then (検証): 正しいシート名の作成、およびバッチ更新APIが呼ばれること
         expect(result.success).toBe(true);
@@ -94,7 +94,7 @@ describe('createShiftSheet (シフト表作成)', () => {
         const end = new Date(2026, 1, 28);
 
         // When: シフト表作成を実行
-        await createShiftSheet(start, end);
+        await createShiftSheet('2026-02-23', '2026-02-28');
 
         // Then: 旧シートの削除メソッドが実行されること
         expect(mockDelete).toHaveBeenCalled();
@@ -127,7 +127,7 @@ describe('createShiftSheet (シフト表作成)', () => {
         const end = new Date(2026, 1, 28);
 
         // When: シフト表作成を実行
-        const result = await createShiftSheet(start, end);
+        const result = await createShiftSheet('2026-02-23', '2026-02-28');
 
         // Then: 失敗ステータスが返ること
         expect(result.success).toBe(false);
@@ -141,7 +141,7 @@ describe('createShiftSheet (シフト表作成)', () => {
         const end = new Date(2026, 1, 25);
 
         // When: シフト表を作成
-        await createShiftSheet(start, end);
+        await createShiftSheet('2026-02-23', '2026-02-25');
 
         // Then: batchUpdate API にリクエスト配列（更新プロパティを含む）が渡されること
         expect(doc._makeBatchUpdateRequest).toHaveBeenCalledWith(

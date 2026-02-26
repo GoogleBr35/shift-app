@@ -3,7 +3,7 @@
 import { getGoogleSheets } from '@/lib/GoogleSheets/google';
 import { getMember } from '@/lib/GoogleSheets/getMember';
 import { signSubmitToken } from '@/lib/jose/jwt';
-import { format, eachDayOfInterval, isMonday, getDay } from 'date-fns';
+import { format, eachDayOfInterval, isMonday, getDay, parseISO } from 'date-fns';
 
 // --- Helper Types ---
 
@@ -122,8 +122,10 @@ const dayToTemplateCol = (date: Date): number => {
 /**
  * シフト作成のサーバーアクション
  */
-export const createShiftSheet = async (startDate: Date, endDate: Date) => {
+export const createShiftSheet = async (startDateStr: string, endDateStr: string) => {
     try {
+        const startDate = parseISO(startDateStr);
+        const endDate = parseISO(endDateStr);
         const doc = await getGoogleSheets();
         const templatesSheet = doc.sheetsByTitle['Templates'];
         const memberList = await getMember();
