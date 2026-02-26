@@ -232,7 +232,7 @@ export const createShiftSheet = async (startDateStr: string, endDateStr: string)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (doc as any)._makeBatchUpdateRequest(requests);
 
-        const token = await signSubmitToken(sheetName, 7);
+        const token = await signSubmitToken(sheetName, 3);
 
         // TokenStore シートにトークンを保存
         let tokenSheet = doc.sheetsByTitle['TokenStore'];
