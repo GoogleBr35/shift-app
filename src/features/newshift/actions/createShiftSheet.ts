@@ -190,6 +190,26 @@ export const createShiftSheet = async (startDateStr: string, endDateStr: string)
             },
         });
 
+        // 全セルを中央揃えに設定
+        requests.push({
+            repeatCell: {
+                range: {
+                    sheetId: newId,
+                    startRowIndex: 0,
+                    endRowIndex: totalRows + 10,
+                    startColumnIndex: 0,
+                    endColumnIndex: columns.length + 5,
+                },
+                cell: {
+                    userEnteredFormat: {
+                        horizontalAlignment: 'CENTER',
+                        verticalAlignment: 'MIDDLE',
+                    },
+                },
+                fields: 'userEnteredFormat(horizontalAlignment,verticalAlignment)',
+            },
+        });
+
         // 各列のデータ・スタイル設定
         columns.forEach((col, colIdx) => {
             if (col.type === 'Member') {
