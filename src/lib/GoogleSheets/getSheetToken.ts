@@ -1,18 +1,19 @@
 'use server';
 
 import { getGoogleSheets } from '@/lib/GoogleSheets/google';
-import { signSubmitToken } from '@/lib/jose/jwt';
+import { signSubmitToken, verifySubmitToken } from '@/lib/jose/jwt';
+import { deleteTokenFromStore } from '@/lib/GoogleSheets/tokenStore';
 
 /**
  * TokenStore シートから指定シート名のトークンを読み取る
- * トークンが存在しない場合は新規生成して保存する
+ * 期限切れの場合は削除し、新規発行は行わない
  */
 export const getSheetToken = async (
     sheetName: string
 ): Promise<{ token: string | null }> => {
     try {
         const doc = await getGoogleSheets();
-        let tokenSheet = doc.sheetsByTitle['TokenStore'];
+        const tokenSheet = doc.sheetsByTitle['TokenStore'];
 
         // TokenStore が存在する場合、既存トークンを検索
         if (tokenSheet) {
@@ -20,7 +21,16 @@ export const getSheetToken = async (
             const row = rows.find((r) => r.get('sheetName') === sheetName);
             if (row) {
                 const existing = row.get('token');
-                if (existing) return { token: existing };
+                if (existing) {
+                    // トークンの有効性を検証
+                    const payload = await verifySubmitToken(existing);
+                    if (payload) {
+                        return { token: existing };
+                    }
+                    // 期限切れまたは無効な場合は削除
+                    await deleteTokenFromStore(existing); // Changed to use deleteTokenFromStore with the actual token
+                    return { token: null };
+                }
             }
         }
 
@@ -33,13 +43,14 @@ export const getSheetToken = async (
         // トークンを新規生成して保存
         const token = await signSubmitToken(sheetName, 7);
 
-        if (!tokenSheet) {
-            tokenSheet = await doc.addSheet({
+        let tokenSheetToUpdate = doc.sheetsByTitle['TokenStore'];
+        if (!tokenSheetToUpdate) {
+            tokenSheetToUpdate = await doc.addSheet({
                 title: 'TokenStore',
                 headerValues: ['sheetName', 'token'],
             });
         }
-        await tokenSheet.addRow({ sheetName, token });
+        await tokenSheetToUpdate.addRow({ sheetName, token });
 
         return { token };
     } catch (error) {

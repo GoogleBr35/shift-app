@@ -3,6 +3,7 @@ import CenterCardLayout from '@/components/layouts/CenterCardLayout';
 import { getMember } from '@/lib/GoogleSheets/getMember';
 import { verifySubmitToken } from '@/lib/jose/jwt';
 import { NameSelector } from '@/features/submit/components/NameSelector';
+import { deleteTokenFromStore } from '@/lib/GoogleSheets/tokenStore';
 
 export default async function SubmitPage({
     searchParams,
@@ -11,6 +12,11 @@ export default async function SubmitPage({
 }) {
     const { token } = await searchParams;
     const payload = token ? await verifySubmitToken(token) : null;
+
+    if (!payload && token) {
+        // 期限切れトークンのクリーンアップ
+        await deleteTokenFromStore(token);
+    }
 
     if (!payload) {
         return (

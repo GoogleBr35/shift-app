@@ -2,6 +2,7 @@
 
 import { getGoogleSheets } from '@/lib/GoogleSheets/google';
 import { verifySubmitToken } from '@/lib/jose/jwt';
+import { deleteTokenFromStore } from '@/lib/GoogleSheets/tokenStore';
 
 export type ShiftEntry = {
     colIndex: number;
@@ -17,10 +18,18 @@ export const submitShift = async (
     staffName: string,
     shifts: ShiftEntry[]
 ): Promise<{ success: boolean; error?: string }> => {
+    const payload = token ? await verifySubmitToken(token) : null;
+
+    if (!payload && token) {
+        // 期限切れトークンのクリーンアップ
+        await deleteTokenFromStore(token);
+    }
+
     try {
         // トークン再検証
-        const payload = await verifySubmitToken(token);
         if (!payload) {
+            // トークンが無効または期限切れの場合、TokenStore から削除
+            await deleteTokenFromStore(token);
             return { success: false, error: 'トークンが無効または期限切れです' };
         }
 
