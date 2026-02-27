@@ -167,7 +167,7 @@ export const ShiftInput = ({
                                 </span>
 
                                 {/* Action buttons */}
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center justify-start gap-1 w-24">
                                     {sv ? (
                                         <>
                                             <button
@@ -188,7 +188,7 @@ export const ShiftInput = ({
                                     ) : (
                                         <button
                                             onClick={() => setModalDate(col.date)}
-                                            className="px-3 py-1.5 text-sm font-medium bg-gray-800 text-white rounded-lg
+                                            className="w-full px-3 py-1.5 text-sm font-medium bg-gray-800 text-white rounded-lg
                                                        hover:bg-gray-900 active:bg-gray-700 transition-colors"
                                         >
                                             出勤
@@ -206,11 +206,10 @@ export const ShiftInput = ({
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 isLoading={isSubmitting}
-                className={`w-full sm:w-auto px-8! py-3! text-base! font-bold ${
-                    isSubmitting
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-gray-800! hover:bg-gray-900! active:bg-gray-700!'
-                }`}
+                className={`w-full sm:w-auto px-8! py-3! text-base! font-bold ${isSubmitting
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gray-800! hover:bg-gray-900! active:bg-gray-700!'
+                    }`}
             >
                 提出
             </Button>

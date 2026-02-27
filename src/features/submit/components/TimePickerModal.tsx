@@ -101,6 +101,7 @@ export const TimePickerModal = ({
                 ) : (
                     <>
                         {/* Apply to other dates grid */}
+                        <h3 className="text-lg font-bold text-gray-700">適用する日を選択</h3>
                         <div className="grid grid-cols-4 gap-2 w-full">
                             {dates.map((d) => {
                                 const isCurrentDate = d === date;
