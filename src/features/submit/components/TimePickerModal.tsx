@@ -115,12 +115,11 @@ export const TimePickerModal = ({
                                         className={`
                                             aspect-square rounded-lg text-lg font-medium
                                             flex items-center justify-center transition-colors
-                                            ${
-                                                isCurrentDate
-                                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                    : isSelected
-                                                      ? 'bg-gray-800 text-white'
-                                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            ${isCurrentDate
+                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                : isSelected
+                                                    ? 'bg-gray-800 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                             }
                                         `}
                                     >
@@ -160,6 +159,7 @@ const HourInput = ({
         onChange={(e) => onChange(parseInt(e.target.value, 10))}
         className="w-16 h-16 text-3xl font-bold text-center border-2 border-gray-200 rounded-xl
                    focus:outline-none focus:border-gray-800 appearance-none bg-white cursor-pointer"
+        style={{ textAlignLast: 'center', paddingInline: 0 }}
     >
         {Array.from({ length: max - min + 1 }, (_, i) => (
             <option key={min + i} value={min + i}>
