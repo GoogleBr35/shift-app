@@ -7,8 +7,8 @@ export type StaffShiftEntry = {
     startCol: number;
     endCol: number;
     date: string;
-    startValue: string;
-    endValue: string;
+    startValue: number | null;
+    endValue: number | null;
 };
 
 export type StaffShiftData = {
@@ -59,8 +59,8 @@ export const getStaffShift = async (
                     startCol: dc.startCol,
                     endCol: dc.endCol,
                     date: dc.date,
-                    startValue: '',
-                    endValue: '',
+                    startValue: null,
+                    endValue: null,
                 })),
             };
         }
@@ -69,19 +69,22 @@ export const getStaffShift = async (
         const shifts: StaffShiftEntry[] = dateColumns.map((dc) => {
             const startCell = sheet.getCell(staffRow, dc.startCol);
             const endCell = sheet.getCell(staffRow, dc.endCol);
-            const startValue = startCell.value !== null ? String(startCell.value) : '';
-            const endValue = endCell.value !== null ? String(endCell.value) : '';
+            const parseNum = (v: unknown): number | null => {
+                if (v === null || v === undefined || v === '') return null;
+                const n = Number(v);
+                return isNaN(n) ? null : n;
+            };
             return {
                 startCol: dc.startCol,
                 endCol: dc.endCol,
                 date: dc.date,
-                startValue,
-                endValue,
+                startValue: parseNum(startCell.value),
+                endValue: parseNum(endCell.value),
             };
         });
 
         // 1つでもデータが入っていれば submitted
-        const submitted = shifts.some((s) => s.startValue !== '' || s.endValue !== '');
+        const submitted = shifts.some((s) => s.startValue !== null || s.endValue !== null);
 
         return { submitted, shifts };
     } catch (error) {
@@ -93,8 +96,8 @@ export const getStaffShift = async (
                 startCol: dc.startCol,
                 endCol: dc.endCol,
                 date: dc.date,
-                startValue: '',
-                endValue: '',
+                startValue: null,
+                endValue: null,
             })),
         };
     }

@@ -76,11 +76,11 @@ describe('submitShift', () => {
         });
 
         // When: シフトを提出
-        const result = await submitShift('valid-token', '田中', [{ startCol: 1, endCol: 2, startValue: '10.0', endValue: '18.0' }]);
+        const result = await submitShift('valid-token', '田中', [{ startCol: 1, endCol: 2, startValue: 10.0, endValue: 18.0 }]);
 
         // Then: 成功が返り、セルが更新される
         expect(result.success).toBe(true);
-        expect(mockStartCell.value).toBe('10.0');
-        expect(mockEndCell.value).toBe('18.0');
+        expect(mockStartCell.value).toBe(10.0);
+        expect(mockEndCell.value).toBe(18.0);
     });
 });

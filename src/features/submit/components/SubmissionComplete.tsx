@@ -4,8 +4,8 @@ import { Button } from '@/components/elements';
 
 type ShiftEntry = {
     date: string;
-    startValue: string;
-    endValue: string;
+    startValue: number | null;
+    endValue: number | null;
 };
 
 type SubmissionCompleteProps = {
@@ -15,9 +15,10 @@ type SubmissionCompleteProps = {
 };
 
 /** 入り/上がりを表示用文字列に変換 */
-const formatDisplay = (startValue: string, endValue: string): string => {
-    if (!startValue && !endValue) return '';
-    return `${startValue || '--'} ~ ${endValue || '--'}`;
+const formatDisplay = (startValue: number | null, endValue: number | null): string => {
+    if (startValue === null && endValue === null) return '';
+    const fmt = (v: number | null) => (v !== null ? String(v) : '--');
+    return `${fmt(startValue)} ~ ${fmt(endValue)}`;
 };
 
 export const SubmissionComplete = ({

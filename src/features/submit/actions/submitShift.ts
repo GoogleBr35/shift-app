@@ -7,8 +7,8 @@ import { deleteTokenFromStore } from '@/lib/GoogleSheets/tokenStore';
 export type ShiftEntry = {
     startCol: number;
     endCol: number;
-    startValue: string;
-    endValue: string;
+    startValue: number | null;
+    endValue: number | null;
 };
 
 /**
@@ -67,12 +67,12 @@ export const submitShift = async (
         // 各シフト値を書き込み（入り列・上がり列）
         for (const entry of shifts) {
             const startCell = sheet.getCell(staffRow, entry.startCol);
-            startCell.value = entry.startValue;
+            startCell.value = entry.startValue ?? '';
             startCell.horizontalAlignment = 'CENTER';
             startCell.verticalAlignment = 'MIDDLE';
 
             const endCell = sheet.getCell(staffRow, entry.endCol);
-            endCell.value = entry.endValue;
+            endCell.value = entry.endValue ?? '';
             endCell.horizontalAlignment = 'CENTER';
             endCell.verticalAlignment = 'MIDDLE';
         }

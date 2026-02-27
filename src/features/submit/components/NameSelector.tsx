@@ -33,7 +33,7 @@ export const NameSelector = ({ sheetName, memberList, token }: NameSelectorProps
     const [step, setStep] = useState<Step>('select');
     const [shiftData, setShiftData] = useState<ShiftData | null>(null);
     // 提出済みデータ（complete画面用）
-    const [submittedShifts, setSubmittedShifts] = useState<{ date: string; startValue: string; endValue: string }[]>([]);
+    const [submittedShifts, setSubmittedShifts] = useState<{ date: string; startValue: number | null; endValue: number | null }[]>([]);
 
     const dateRange = sheetName.replace('_', ' 〜 ');
 
@@ -63,7 +63,7 @@ export const NameSelector = ({ sheetName, memberList, token }: NameSelectorProps
     };
 
     // 提出完了後に SubmissionComplete へ遷移
-    const handleSubmitComplete = (data: { date: string; startValue: string; endValue: string }[]) => {
+    const handleSubmitComplete = (data: { date: string; startValue: number | null; endValue: number | null }[]) => {
         setSubmittedShifts(data);
         // 修正フロー用に initialShifts も更新
         if (shiftData) {
@@ -75,8 +75,8 @@ export const NameSelector = ({ sheetName, memberList, token }: NameSelectorProps
                         startCol: col.startCol,
                         endCol: col.endCol,
                         date: col.date,
-                        startValue: found?.startValue ?? '',
-                        endValue: found?.endValue ?? '',
+                        startValue: found?.startValue ?? null,
+                        endValue: found?.endValue ?? null,
                     };
                 }),
             });
@@ -159,8 +159,8 @@ export const NameSelector = ({ sheetName, memberList, token }: NameSelectorProps
                 onClick={handleConfirm}
                 disabled={!selectedName}
                 className={`w-full sm:w-auto px-8! py-3! text-base! font-bold ${!selectedName
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-gray-800! hover:bg-gray-900! active:bg-gray-700!'
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gray-800! hover:bg-gray-900! active:bg-gray-700!'
                     }`}
             >
                 次へ

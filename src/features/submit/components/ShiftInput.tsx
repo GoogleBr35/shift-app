@@ -20,10 +20,15 @@ type ShiftInputProps = {
     staffName: string;
     columns: ShiftColumn[];
     initialShifts: StaffShiftEntry[];
-    onSubmitComplete: (submittedShifts: { date: string; startValue: string; endValue: string }[]) => void;
+    onSubmitComplete: (submittedShifts: { date: string; startValue: number | null; endValue: number | null }[]) => void;
 };
 
-/** 時間を hh.m 形式に変換 */
+/** 時間を数値に変換 (e.g. 10, 0 → 10.0 / 10, 30 → 10.5) */
+const toNumericTime = (hour: number, minute: number): number => {
+    return hour + (minute === 30 ? 0.5 : 0);
+};
+
+/** 時間を表示用文字列に変換 */
 const formatTime = (hour: number, minute: number): string => {
     const m = minute === 30 ? '.5' : '.0';
     return `${hour}${m}`;
@@ -34,15 +39,14 @@ const formatShiftDisplay = (sv: ShiftValue): string => {
     return `${formatTime(sv.startHour, sv.startMinute)} ~ ${formatTime(sv.endHour, sv.endMinute)}`;
 };
 
-/** 開始/終了の値文字列から ShiftValue をパース */
-const parseShiftValues = (startValue: string, endValue: string): ShiftValue | null => {
-    if (!startValue && !endValue) return null;
-    const parseOne = (val: string) => {
-        const match = val.match(/^(\d+)\.([\d])$/);
-        if (!match) return null;
-        const hour = parseInt(match[1], 10);
-        const frac = parseInt(match[2], 10);
-        return { hour, minute: frac === 5 ? 30 : 0 };
+/** 開始/終了の数値から ShiftValue をパース */
+const parseShiftValues = (startValue: number | null, endValue: number | null): ShiftValue | null => {
+    if (startValue === null && endValue === null) return null;
+    const parseOne = (val: number | null) => {
+        if (val === null) return null;
+        const hour = Math.floor(val);
+        const minute = (val % 1) >= 0.25 ? 30 : 0;
+        return { hour, minute };
     };
     const start = parseOne(startValue);
     const end = parseOne(endValue);
@@ -120,8 +124,8 @@ export const ShiftInput = ({
                 return {
                     startCol: col.startCol,
                     endCol: col.endCol,
-                    startValue: sv ? formatTime(sv.startHour, sv.startMinute) : '',
-                    endValue: sv ? formatTime(sv.endHour, sv.endMinute) : '',
+                    startValue: sv ? toNumericTime(sv.startHour, sv.startMinute) : null,
+                    endValue: sv ? toNumericTime(sv.endHour, sv.endMinute) : null,
                 };
             });
 
@@ -131,8 +135,8 @@ export const ShiftInput = ({
                     const sv = shifts[col.date];
                     return {
                         date: col.date,
-                        startValue: sv ? formatTime(sv.startHour, sv.startMinute) : '',
-                        endValue: sv ? formatTime(sv.endHour, sv.endMinute) : '',
+                        startValue: sv ? toNumericTime(sv.startHour, sv.startMinute) : null,
+                        endValue: sv ? toNumericTime(sv.endHour, sv.endMinute) : null,
                     };
                 });
                 onSubmitComplete(submittedData);
@@ -215,8 +219,8 @@ export const ShiftInput = ({
                 disabled={isSubmitting}
                 isLoading={isSubmitting}
                 className={`w-full sm:w-auto px-8! py-3! text-base! font-bold ${isSubmitting
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-gray-800! hover:bg-gray-900! active:bg-gray-700!'
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gray-800! hover:bg-gray-900! active:bg-gray-700!'
                     }`}
             >
                 提出
