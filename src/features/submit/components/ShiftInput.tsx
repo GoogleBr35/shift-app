@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Button } from '@/components/elements';
 import { submitShift } from '@/features/submit/actions/submitShift';
 import { TimePickerModal } from './TimePickerModal';
+import type { ShiftColumn } from '@/lib/GoogleSheets/getShiftColumns';
+import type { StaffShiftEntry } from '@/lib/GoogleSheets/getStaffShift';
 
 type ShiftValue = {
     startHour: number;
@@ -16,9 +18,9 @@ type ShiftInputProps = {
     token: string;
     sheetName: string;
     staffName: string;
-    columns: { index: number; date: string }[];
-    initialShifts: { colIndex: number; date: string; value: string }[];
-    onSubmitComplete: (submittedShifts: { date: string; value: string }[]) => void;
+    columns: ShiftColumn[];
+    initialShifts: StaffShiftEntry[];
+    onSubmitComplete: (submittedShifts: { date: string; startValue: string; endValue: string }[]) => void;
 };
 
 /** 時間を hh.m 形式に変換 */
@@ -32,25 +34,25 @@ const formatShiftDisplay = (sv: ShiftValue): string => {
     return `${formatTime(sv.startHour, sv.startMinute)} ~ ${formatTime(sv.endHour, sv.endMinute)}`;
 };
 
-/** "hh.m ~ hh.m" 文字列をパース */
-const parseShiftValue = (value: string): ShiftValue | null => {
-    const match = value.match(/^(\d+)\.(\d)\s*~\s*(\d+)\.(\d)$/);
-    if (!match) return null;
-    const startHour = parseInt(match[1], 10);
-    const startFrac = parseInt(match[2], 10);
-    const endHour = parseInt(match[3], 10);
-    const endFrac = parseInt(match[4], 10);
-    return {
-        startHour,
-        startMinute: startFrac === 5 ? 30 : 0,
-        endHour,
-        endMinute: endFrac === 5 ? 30 : 0,
+/** 開始/終了の値文字列から ShiftValue をパース */
+const parseShiftValues = (startValue: string, endValue: string): ShiftValue | null => {
+    if (!startValue && !endValue) return null;
+    const parseOne = (val: string) => {
+        const match = val.match(/^(\d+)\.([\d])$/);
+        if (!match) return null;
+        const hour = parseInt(match[1], 10);
+        const frac = parseInt(match[2], 10);
+        return { hour, minute: frac === 5 ? 30 : 0 };
     };
-};
-
-/** シフト値を保存用文字列に変換 */
-const shiftToString = (sv: ShiftValue): string => {
-    return `${formatTime(sv.startHour, sv.startMinute)} ~ ${formatTime(sv.endHour, sv.endMinute)}`;
+    const start = parseOne(startValue);
+    const end = parseOne(endValue);
+    if (!start || !end) return null;
+    return {
+        startHour: start.hour,
+        startMinute: start.minute,
+        endHour: end.hour,
+        endMinute: end.minute,
+    };
 };
 
 export const ShiftInput = ({
@@ -64,7 +66,7 @@ export const ShiftInput = ({
     // 初期値をパース
     const initValues: Record<string, ShiftValue | null> = {};
     for (const shift of initialShifts) {
-        initValues[shift.date] = shift.value ? parseShiftValue(shift.value) : null;
+        initValues[shift.date] = parseShiftValues(shift.startValue, shift.endValue);
     }
 
     const [shifts, setShifts] = useState<Record<string, ShiftValue | null>>(initValues);
@@ -116,8 +118,10 @@ export const ShiftInput = ({
             const shiftEntries = columns.map((col) => {
                 const sv = shifts[col.date];
                 return {
-                    colIndex: col.index,
-                    value: sv ? shiftToString(sv) : '',
+                    startCol: col.startCol,
+                    endCol: col.endCol,
+                    startValue: sv ? formatTime(sv.startHour, sv.startMinute) : '',
+                    endValue: sv ? formatTime(sv.endHour, sv.endMinute) : '',
                 };
             });
 
@@ -125,7 +129,11 @@ export const ShiftInput = ({
             if (result.success) {
                 const submittedData = columns.map((col) => {
                     const sv = shifts[col.date];
-                    return { date: col.date, value: sv ? shiftToString(sv) : '' };
+                    return {
+                        date: col.date,
+                        startValue: sv ? formatTime(sv.startHour, sv.startMinute) : '',
+                        endValue: sv ? formatTime(sv.endHour, sv.endMinute) : '',
+                    };
                 });
                 onSubmitComplete(submittedData);
             } else {
@@ -206,11 +214,10 @@ export const ShiftInput = ({
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 isLoading={isSubmitting}
-                className={`w-full sm:w-auto px-8! py-3! text-base! font-bold ${
-                    isSubmitting
+                className={`w-full sm:w-auto px-8! py-3! text-base! font-bold ${isSubmitting
                         ? 'bg-gray-400 cursor-not-allowed'
                         : 'bg-gray-800! hover:bg-gray-900! active:bg-gray-700!'
-                }`}
+                    }`}
             >
                 提出
             </Button>

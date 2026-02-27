@@ -33,11 +33,12 @@ export const getSubmissionStatus = async (
         const rowCount = sheet.rowCount;
 
         // 日にち列（Row 3 に数字が入っているセル）を特定
-        const dateCols: number[] = [];
+        // 2列構造: startCol と endCol (= startCol + 1) のペアで管理
+        const dateCols: { startCol: number; endCol: number }[] = [];
         for (let col = 0; col < sheet.columnCount; col++) {
             const cell = sheet.getCell(3, col);
             if (cell.value !== null && cell.value !== '' && !isNaN(Number(cell.value))) {
-                dateCols.push(col);
+                dateCols.push({ startCol: col, endCol: col + 1 });
             }
         }
 
@@ -61,9 +62,13 @@ export const getSubmissionStatus = async (
             if (row === undefined) {
                 return { name, submitted: false };
             }
-            const submitted = dateCols.some((col) => {
-                const cell = sheet.getCell(row, col);
-                return cell.value !== null && String(cell.value).trim() !== '';
+            // 入り列または上がり列のいずれかにデータがあれば提出済み
+            const submitted = dateCols.some(({ startCol, endCol }) => {
+                const startCell = sheet.getCell(row, startCol);
+                const endCell = sheet.getCell(row, endCol);
+                const hasStart = startCell.value !== null && String(startCell.value).trim() !== '';
+                const hasEnd = endCell.value !== null && String(endCell.value).trim() !== '';
+                return hasStart || hasEnd;
             });
             return { name, submitted };
         });

@@ -16,7 +16,7 @@ type RowDef = {
 
 // --- Helper Functions ---
 
-/** copyPaste リクエストを生成 */
+/** copyPaste リクエストを生成（colSpan 列分コピー） */
 const makeCopyPaste = (
     srcSheetId: number,
     dstSheetId: number,
@@ -26,6 +26,7 @@ const makeCopyPaste = (
     dstRow: number,
     dstCol: number,
     pasteType: string = 'PASTE_NORMAL',
+    colSpan: number = 2,
     rowSpan: number = srcRowEnd - srcRow
 ) => ({
     copyPaste: {
@@ -34,14 +35,14 @@ const makeCopyPaste = (
             startRowIndex: srcRow,
             endRowIndex: srcRowEnd,
             startColumnIndex: srcCol,
-            endColumnIndex: srcCol + 1,
+            endColumnIndex: srcCol + colSpan,
         },
         destination: {
             sheetId: dstSheetId,
             startRowIndex: dstRow,
             endRowIndex: dstRow + rowSpan,
             startColumnIndex: dstCol,
-            endColumnIndex: dstCol + 1,
+            endColumnIndex: dstCol + colSpan,
         },
         pasteType,
     },
@@ -56,6 +57,26 @@ const makeCellUpdate = (sheetId: number, row: number, col: number, value: string
     },
 });
 
+/** mergeCells リクエストを生成（1行 × 2列を結合） */
+const makeMerge = (sheetId: number, row: number, col: number) => ({
+    mergeCells: {
+        range: {
+            sheetId,
+            startRowIndex: row,
+            endRowIndex: row + 1,
+            startColumnIndex: col,
+            endColumnIndex: col + 2,
+        },
+        mergeType: 'MERGE_ALL',
+    },
+});
+
+/** セル結合が必要な行かどうかを判定する */
+const isMergeRow = (rowIndex: number, headerRowCount: number): boolean => {
+    // ヘッダー部の Row 0〜4（昼本数/夜本数/深夜本数/日にち/曜日）
+    return rowIndex < headerRowCount;
+};
+
 /** Body 部分のリクエスト配列を生成（Member列・Date列で共用） */
 const buildBodyRequests = (
     layout: RowDef[],
@@ -64,6 +85,7 @@ const buildBodyRequests = (
     srcCol: number,
     dstCol: number,
     isMemberCol: boolean,
+    colSpan: number,
     dateStr?: string
 ) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -72,11 +94,16 @@ const buildBodyRequests = (
 
     for (const def of layout) {
         if (def.type === 'Spacer') {
-            reqs.push(makeCopyPaste(templateSheetId, newSheetId, 3, 5, srcCol, row, dstCol));
+            reqs.push(makeCopyPaste(templateSheetId, newSheetId, 3, 5, srcCol, row, dstCol, 'PASTE_NORMAL', colSpan));
             // Spacer の1行目（row）は日にち行 → Date列の場合は日付を書き込む
-            // Spacer の2行目（row+1）は曜日行 → テンプレートコピー（PASTE_NORMAL）で処理済み
+            // Spacer の2行目（row+1）は曜日行 → テンプレートコピーで処理済み
             if (dateStr) {
                 reqs.push(makeCellUpdate(newSheetId, row, dstCol, dateStr));
+            }
+            // Date列の Spacer 行はセル結合（日にち行・曜日行）
+            if (!isMemberCol) {
+                reqs.push(makeMerge(newSheetId, row, dstCol));     // 日にち行
+                reqs.push(makeMerge(newSheetId, row + 1, dstCol)); // 曜日行
             }
             row += 2;
         } else if (def.members) {
@@ -86,7 +113,7 @@ const buildBodyRequests = (
                         templateSheetId, newSheetId,
                         def.templateRow!, def.templateRow! + 1,
                         srcCol, row, dstCol,
-                        isMemberCol ? 'PASTE_FORMAT' : 'PASTE_FORMAT'
+                        'PASTE_FORMAT', colSpan
                     )
                 );
                 if (isMemberCol) {
@@ -102,7 +129,8 @@ const buildBodyRequests = (
                 makeCopyPaste(
                     templateSheetId, newSheetId,
                     def.templateRow!, def.templateRow! + 1,
-                    srcCol, row, dstCol
+                    srcCol, row, dstCol,
+                    'PASTE_NORMAL', colSpan
                 )
             );
             row++;
@@ -111,10 +139,14 @@ const buildBodyRequests = (
     return reqs;
 };
 
-/** 曜日 → Templates シートの列インデックスを返す */
+/**
+ * 曜日 → Templates シートの列インデックスを返す（2列幅対応）
+ * Mon→1, Tue→3, Wed→5, Thu→7, Fri→9, Sat→11, Sun→13
+ */
 const dayToTemplateCol = (date: Date): number => {
     const d = getDay(date); // 0(Sun) - 6(Sat)
-    return d === 0 ? 7 : d; // Sun→H(7), Mon→B(1), ..., Sat→G(6)
+    if (d === 0) return 13; // Sun → col 13,14 (N,O)
+    return (d - 1) * 2 + 1; // Mon→1, Tue→3, Wed→5, Thu→7, Fri→9, Sat→11
 };
 
 // --- Main Action ---
@@ -159,7 +191,7 @@ export const createShiftSheet = async (startDateStr: string, endDateStr: string)
             return sum + 1;
         }, 0);
 
-        // 列構成を決定
+        // 列構成を決定（1日 = 2列）
         type ColDef = { type: 'Member' | 'Date'; date?: Date };
         const columns: ColDef[] = [];
         const allDates = eachDayOfInterval({ start: startDate, end: endDate });
@@ -169,6 +201,9 @@ export const createShiftSheet = async (startDateStr: string, endDateStr: string)
             if (isMonday(d)) columns.push({ type: 'Member' });
             columns.push({ type: 'Date', date: d });
         }
+
+        // 実際の列数を計算: Member=1列、Date=2列
+        const totalCols = columns.reduce((sum, col) => sum + (col.type === 'Member' ? 1 : 2), 0);
 
         // バッチリクエスト構築
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -183,7 +218,7 @@ export const createShiftSheet = async (startDateStr: string, endDateStr: string)
                     sheetId: newId,
                     gridProperties: {
                         rowCount: totalRows + 10,
-                        columnCount: columns.length + 5,
+                        columnCount: totalCols + 5,
                     },
                 },
                 fields: 'gridProperties.rowCount,gridProperties.columnCount',
@@ -198,7 +233,7 @@ export const createShiftSheet = async (startDateStr: string, endDateStr: string)
                     startRowIndex: 0,
                     endRowIndex: totalRows + 10,
                     startColumnIndex: 0,
-                    endColumnIndex: columns.length + 5,
+                    endColumnIndex: totalCols + 5,
                 },
                 cell: {
                     userEnteredFormat: {
@@ -211,23 +246,31 @@ export const createShiftSheet = async (startDateStr: string, endDateStr: string)
         });
 
         // 各列のデータ・スタイル設定
-        columns.forEach((col, colIdx) => {
+        let colIdx = 0;
+        for (const col of columns) {
             if (col.type === 'Member') {
+                // Member 列は1列幅
                 // Header (A1:A5)
-                requests.push(makeCopyPaste(tplId, newId, 0, 5, 0, 0, colIdx));
+                requests.push(makeCopyPaste(tplId, newId, 0, 5, 0, 0, colIdx, 'PASTE_NORMAL', 1));
                 // Body
-                requests.push(...buildBodyRequests(layout, tplId, newId, 0, colIdx, true));
+                requests.push(...buildBodyRequests(layout, tplId, newId, 0, colIdx, true, 1));
+                colIdx += 1;
             } else if (col.date) {
                 const srcCol = dayToTemplateCol(col.date);
-                // Header
-                requests.push(makeCopyPaste(tplId, newId, 0, 5, srcCol, 0, colIdx));
+                // Header（2列幅でコピー）
+                requests.push(makeCopyPaste(tplId, newId, 0, 5, srcCol, 0, colIdx, 'PASTE_NORMAL', 2));
                 // 日付を Row 3 (日にち行) に書き込み
                 const dayStr = format(col.date, 'd');
                 requests.push(makeCellUpdate(newId, 3, colIdx, dayStr));
-                // Body
-                requests.push(...buildBodyRequests(layout, tplId, newId, srcCol, colIdx, false, dayStr));
+                // ヘッダー部の結合（昼本数/夜本数/深夜本数/日にち/曜日 = Row 0〜4）
+                for (let r = 0; r < 5; r++) {
+                    requests.push(makeMerge(newId, r, colIdx));
+                }
+                // Body（2列幅）
+                requests.push(...buildBodyRequests(layout, tplId, newId, srcCol, colIdx, false, 2, dayStr));
+                colIdx += 2;
             }
-        });
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (doc as any)._makeBatchUpdateRequest(requests);

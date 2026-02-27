@@ -5,13 +5,15 @@ import { verifySubmitToken } from '@/lib/jose/jwt';
 import { deleteTokenFromStore } from '@/lib/GoogleSheets/tokenStore';
 
 export type ShiftEntry = {
-    colIndex: number;
-    value: string;
+    startCol: number;
+    endCol: number;
+    startValue: string;
+    endValue: string;
 };
 
 /**
  * シフトデータを Google Sheets に書き込む
- * token を再検証して sheetName を取得し、該当行に値を書き込む
+ * token を再検証して sheetName を取得し、該当行に入り/上がりの値を書き込む
  */
 export const submitShift = async (
     token: string,
@@ -62,13 +64,17 @@ export const submitShift = async (
             return { success: false, error: 'スタッフが見つかりません' };
         }
 
-        // 各シフト値を書き込み
+        // 各シフト値を書き込み（入り列・上がり列）
         for (const entry of shifts) {
-            const cell = sheet.getCell(staffRow, entry.colIndex);
-            cell.value = entry.value;
-            // フォーマットを維持（中央揃え）
-            cell.horizontalAlignment = 'CENTER';
-            cell.verticalAlignment = 'MIDDLE';
+            const startCell = sheet.getCell(staffRow, entry.startCol);
+            startCell.value = entry.startValue;
+            startCell.horizontalAlignment = 'CENTER';
+            startCell.verticalAlignment = 'MIDDLE';
+
+            const endCell = sheet.getCell(staffRow, entry.endCol);
+            endCell.value = entry.endValue;
+            endCell.horizontalAlignment = 'CENTER';
+            endCell.verticalAlignment = 'MIDDLE';
         }
 
         await sheet.saveUpdatedCells();

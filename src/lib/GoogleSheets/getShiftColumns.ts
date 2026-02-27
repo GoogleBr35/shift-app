@@ -3,13 +3,15 @@
 import { getGoogleSheets } from '@/lib/GoogleSheets/google';
 
 export type ShiftColumn = {
-    index: number;
+    startCol: number;
+    endCol: number;
     date: string;
 };
 
 /**
  * シフト表の日付列一覧を取得する
  * Row 3（日にち行）を走査し、数字が入っているセルを Date 列として返す
+ * 各日付は2列（入り/上がり）で構成される
  */
 export const getShiftColumns = async (
     sheetName: string
@@ -33,9 +35,11 @@ export const getShiftColumns = async (
             const value = cell.value;
 
             // 数字（日にち）が入っているセルを Date 列とみなす
+            // 2列構造: startCol = 現在の列, endCol = 次の列
             if (value !== null && value !== '' && !isNaN(Number(value))) {
                 columns.push({
-                    index: col,
+                    startCol: col,
+                    endCol: col + 1,
                     date: String(value),
                 });
             }
