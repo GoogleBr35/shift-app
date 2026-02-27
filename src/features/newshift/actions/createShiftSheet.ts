@@ -272,6 +272,56 @@ export const createShiftSheet = async (startDateStr: string, endDateStr: string)
             }
         }
 
+        // Date列の幅を設定（Member列はそのまま）
+        const DATE_COL_WIDTH = 60; // px
+        let widthColIdx = 0;
+        for (const col of columns) {
+            if (col.type === 'Member') {
+                widthColIdx += 1;
+            } else {
+                // 入り列・上がり列それぞれに幅を設定
+                requests.push({
+                    updateDimensionProperties: {
+                        range: {
+                            sheetId: newId,
+                            dimension: 'COLUMNS',
+                            startIndex: widthColIdx,
+                            endIndex: widthColIdx + 2,
+                        },
+                        properties: { pixelSize: DATE_COL_WIDTH },
+                        fields: 'pixelSize',
+                    },
+                });
+                widthColIdx += 2;
+            }
+        }
+
+        // 日ごとの区切り線（各 Date の左端に1pt縦枠線）
+        let borderColIdx = 0;
+        for (const col of columns) {
+            if (col.type === 'Member') {
+                borderColIdx += 1;
+            } else {
+                requests.push({
+                    updateBorders: {
+                        range: {
+                            sheetId: newId,
+                            startRowIndex: 0,
+                            endRowIndex: totalRows,
+                            startColumnIndex: borderColIdx,
+                            endColumnIndex: borderColIdx + 1,
+                        },
+                        left: {
+                            style: 'SOLID',
+                            width: 3,
+                            color: { red: 0, green: 0, blue: 0, alpha: 1 },
+                        },
+                    },
+                });
+                borderColIdx += 2;
+            }
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (doc as any)._makeBatchUpdateRequest(requests);
 
