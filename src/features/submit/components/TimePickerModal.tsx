@@ -182,6 +182,7 @@ const MinuteSelect = ({
         onChange={(e) => onChange(parseInt(e.target.value, 10))}
         className="w-16 h-16 text-3xl font-bold text-center border-2 border-gray-200 rounded-xl
                    focus:outline-none focus:border-gray-800 appearance-none bg-white cursor-pointer"
+        style={{ textAlignLast: 'center', paddingInline: 0 }}
     >
         <option value={0}>00</option>
         <option value={30}>30</option>
