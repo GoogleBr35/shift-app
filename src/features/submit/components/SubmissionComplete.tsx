@@ -4,13 +4,21 @@ import { Button } from '@/components/elements';
 
 type ShiftEntry = {
     date: string;
-    value: string;
+    startValue: number | null;
+    endValue: number | null;
 };
 
 type SubmissionCompleteProps = {
     staffName: string;
     shifts: ShiftEntry[];
     onEdit: () => void;
+};
+
+/** 入り/上がりを表示用文字列に変換 */
+const formatDisplay = (startValue: number | null, endValue: number | null): string => {
+    if (startValue === null && endValue === null) return '';
+    const fmt = (v: number | null) => (v !== null ? String(v) : '--');
+    return `${fmt(startValue)} ~ ${fmt(endValue)}`;
 };
 
 export const SubmissionComplete = ({
@@ -56,7 +64,7 @@ export const SubmissionComplete = ({
                                 {s.date}
                             </span>
                             <span className="flex-1 text-center text-base font-medium text-gray-700">
-                                {s.value || '-- ~ --'}
+                                {formatDisplay(s.startValue, s.endValue) || '-- ~ --'}
                             </span>
                         </div>
                     ))}

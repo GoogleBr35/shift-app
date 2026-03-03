@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Button, Spinner } from '@/components/elements';
 import type { MemberData } from '@/lib/GoogleSheets/getMember';
+import type { ShiftColumn } from '@/lib/GoogleSheets/getShiftColumns';
+import type { StaffShiftEntry } from '@/lib/GoogleSheets/getStaffShift';
 import { getShiftColumns } from '@/lib/GoogleSheets/getShiftColumns';
 import { getStaffShift } from '@/lib/GoogleSheets/getStaffShift';
 import { ShiftInput } from './ShiftInput';
@@ -15,8 +17,8 @@ type NameSelectorProps = {
 };
 
 type ShiftData = {
-    columns: { index: number; date: string }[];
-    initialShifts: { colIndex: number; date: string; value: string }[];
+    columns: ShiftColumn[];
+    initialShifts: StaffShiftEntry[];
 };
 
 type Step = 'select' | 'loading' | 'input' | 'complete';
@@ -31,7 +33,7 @@ export const NameSelector = ({ sheetName, memberList, token }: NameSelectorProps
     const [step, setStep] = useState<Step>('select');
     const [shiftData, setShiftData] = useState<ShiftData | null>(null);
     // 提出済みデータ（complete画面用）
-    const [submittedShifts, setSubmittedShifts] = useState<{ date: string; value: string }[]>([]);
+    const [submittedShifts, setSubmittedShifts] = useState<{ date: string; startValue: number | null; endValue: number | null }[]>([]);
 
     const dateRange = sheetName.replace('_', ' 〜 ');
 
@@ -45,10 +47,10 @@ export const NameSelector = ({ sheetName, memberList, token }: NameSelectorProps
 
             setShiftData({ columns, initialShifts: shifts });
 
-            // 4-3: 提出済みなら SubmissionComplete を直接表示
+            // 提出済みなら SubmissionComplete を直接表示
             if (submitted) {
                 setSubmittedShifts(
-                    shifts.map((s) => ({ date: s.date, value: s.value }))
+                    shifts.map((s) => ({ date: s.date, startValue: s.startValue, endValue: s.endValue }))
                 );
                 setStep('complete');
             } else {
@@ -60,8 +62,8 @@ export const NameSelector = ({ sheetName, memberList, token }: NameSelectorProps
         }
     };
 
-    // 4-2: 提出完了後に SubmissionComplete へ遷移
-    const handleSubmitComplete = (data: { date: string; value: string }[]) => {
+    // 提出完了後に SubmissionComplete へ遷移
+    const handleSubmitComplete = (data: { date: string; startValue: number | null; endValue: number | null }[]) => {
         setSubmittedShifts(data);
         // 修正フロー用に initialShifts も更新
         if (shiftData) {
@@ -70,9 +72,11 @@ export const NameSelector = ({ sheetName, memberList, token }: NameSelectorProps
                 initialShifts: shiftData.columns.map((col) => {
                     const found = data.find((d) => d.date === col.date);
                     return {
-                        colIndex: col.index,
+                        startCol: col.startCol,
+                        endCol: col.endCol,
                         date: col.date,
-                        value: found?.value ?? '',
+                        startValue: found?.startValue ?? null,
+                        endValue: found?.endValue ?? null,
                     };
                 }),
             });
@@ -80,7 +84,7 @@ export const NameSelector = ({ sheetName, memberList, token }: NameSelectorProps
         setStep('complete');
     };
 
-    // 4-4: 修正ボタンから ShiftInput へ戻る
+    // 修正ボタンから ShiftInput へ戻る
     const handleEdit = () => {
         setStep('input');
     };
@@ -154,11 +158,10 @@ export const NameSelector = ({ sheetName, memberList, token }: NameSelectorProps
             <Button
                 onClick={handleConfirm}
                 disabled={!selectedName}
-                className={`w-full sm:w-auto px-8! py-3! text-base! font-bold ${
-                    !selectedName
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-gray-800! hover:bg-gray-900! active:bg-gray-700!'
-                }`}
+                className={`w-full sm:w-auto px-8! py-3! text-base! font-bold ${!selectedName
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gray-800! hover:bg-gray-900! active:bg-gray-700!'
+                    }`}
             >
                 次へ
             </Button>

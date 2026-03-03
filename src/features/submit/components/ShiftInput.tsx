@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Button } from '@/components/elements';
 import { submitShift } from '@/features/submit/actions/submitShift';
 import { TimePickerModal } from './TimePickerModal';
+import type { ShiftColumn } from '@/lib/GoogleSheets/getShiftColumns';
+import type { StaffShiftEntry } from '@/lib/GoogleSheets/getStaffShift';
 
 type ShiftValue = {
     startHour: number;
@@ -16,12 +18,17 @@ type ShiftInputProps = {
     token: string;
     sheetName: string;
     staffName: string;
-    columns: { index: number; date: string }[];
-    initialShifts: { colIndex: number; date: string; value: string }[];
-    onSubmitComplete: (submittedShifts: { date: string; value: string }[]) => void;
+    columns: ShiftColumn[];
+    initialShifts: StaffShiftEntry[];
+    onSubmitComplete: (submittedShifts: { date: string; startValue: number | null; endValue: number | null }[]) => void;
 };
 
-/** 時間を hh.m 形式に変換 */
+/** 時間を数値に変換 (e.g. 10, 0 → 10.0 / 10, 30 → 10.5) */
+const toNumericTime = (hour: number, minute: number): number => {
+    return hour + (minute === 30 ? 0.5 : 0);
+};
+
+/** 時間を表示用文字列に変換 */
 const formatTime = (hour: number, minute: number): string => {
     const m = minute === 30 ? '.5' : '.0';
     return `${hour}${m}`;
@@ -32,25 +39,24 @@ const formatShiftDisplay = (sv: ShiftValue): string => {
     return `${formatTime(sv.startHour, sv.startMinute)} ~ ${formatTime(sv.endHour, sv.endMinute)}`;
 };
 
-/** "hh.m ~ hh.m" 文字列をパース */
-const parseShiftValue = (value: string): ShiftValue | null => {
-    const match = value.match(/^(\d+)\.(\d)\s*~\s*(\d+)\.(\d)$/);
-    if (!match) return null;
-    const startHour = parseInt(match[1], 10);
-    const startFrac = parseInt(match[2], 10);
-    const endHour = parseInt(match[3], 10);
-    const endFrac = parseInt(match[4], 10);
-    return {
-        startHour,
-        startMinute: startFrac === 5 ? 30 : 0,
-        endHour,
-        endMinute: endFrac === 5 ? 30 : 0,
+/** 開始/終了の数値から ShiftValue をパース */
+const parseShiftValues = (startValue: number | null, endValue: number | null): ShiftValue | null => {
+    if (startValue === null && endValue === null) return null;
+    const parseOne = (val: number | null) => {
+        if (val === null) return null;
+        const hour = Math.floor(val);
+        const minute = (val % 1) >= 0.25 ? 30 : 0;
+        return { hour, minute };
     };
-};
-
-/** シフト値を保存用文字列に変換 */
-const shiftToString = (sv: ShiftValue): string => {
-    return `${formatTime(sv.startHour, sv.startMinute)} ~ ${formatTime(sv.endHour, sv.endMinute)}`;
+    const start = parseOne(startValue);
+    const end = parseOne(endValue);
+    if (!start || !end) return null;
+    return {
+        startHour: start.hour,
+        startMinute: start.minute,
+        endHour: end.hour,
+        endMinute: end.minute,
+    };
 };
 
 export const ShiftInput = ({
@@ -64,7 +70,7 @@ export const ShiftInput = ({
     // 初期値をパース
     const initValues: Record<string, ShiftValue | null> = {};
     for (const shift of initialShifts) {
-        initValues[shift.date] = shift.value ? parseShiftValue(shift.value) : null;
+        initValues[shift.date] = parseShiftValues(shift.startValue, shift.endValue);
     }
 
     const [shifts, setShifts] = useState<Record<string, ShiftValue | null>>(initValues);
@@ -116,8 +122,10 @@ export const ShiftInput = ({
             const shiftEntries = columns.map((col) => {
                 const sv = shifts[col.date];
                 return {
-                    colIndex: col.index,
-                    value: sv ? shiftToString(sv) : '',
+                    startCol: col.startCol,
+                    endCol: col.endCol,
+                    startValue: sv ? toNumericTime(sv.startHour, sv.startMinute) : null,
+                    endValue: sv ? toNumericTime(sv.endHour, sv.endMinute) : null,
                 };
             });
 
@@ -125,7 +133,11 @@ export const ShiftInput = ({
             if (result.success) {
                 const submittedData = columns.map((col) => {
                     const sv = shifts[col.date];
-                    return { date: col.date, value: sv ? shiftToString(sv) : '' };
+                    return {
+                        date: col.date,
+                        startValue: sv ? toNumericTime(sv.startHour, sv.startMinute) : null,
+                        endValue: sv ? toNumericTime(sv.endHour, sv.endMinute) : null,
+                    };
                 });
                 onSubmitComplete(submittedData);
             } else {

@@ -67,14 +67,20 @@ describe('submitShift', () => {
         mockedVerifySubmitToken.mockResolvedValue({ sheetName: 'some_sheet' });
 
         // Mock cell access
-        const mockCell = { value: '田中', horizontalAlignment: '', verticalAlignment: '' };
-        (doc.sheetsByTitle.some_sheet.getCell as any).mockReturnValue(mockCell);
+        const mockStartCell = { value: '田中', horizontalAlignment: '', verticalAlignment: '' };
+        const mockEndCell = { value: null, horizontalAlignment: '', verticalAlignment: '' };
+        (doc.sheetsByTitle.some_sheet.getCell as any).mockImplementation((_row: number, col: number) => {
+            if (col === 1) return mockStartCell;
+            if (col === 2) return mockEndCell;
+            return { value: '田中', horizontalAlignment: '', verticalAlignment: '' };
+        });
 
         // When: シフトを提出
-        const result = await submitShift('valid-token', '田中', [{ colIndex: 1, value: '○' }]);
+        const result = await submitShift('valid-token', '田中', [{ startCol: 1, endCol: 2, startValue: 10.0, endValue: 18.0 }]);
 
         // Then: 成功が返り、セルが更新される
         expect(result.success).toBe(true);
-        expect(mockCell.value).toBe('○');
+        expect(mockStartCell.value).toBe(10.0);
+        expect(mockEndCell.value).toBe(18.0);
     });
 });
