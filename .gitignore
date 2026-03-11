@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# project specific
+/__mocks__
+.agent
+docs/MVP_TASKS.md
+docs/SECURITY_FIX_TASKS.md
