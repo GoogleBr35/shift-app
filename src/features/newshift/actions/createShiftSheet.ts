@@ -433,6 +433,18 @@ export const createShiftSheet = async (startDateStr: string, endDateStr: string)
 
         for (const col of columns) {
             if (col.type === 'Member') {
+                requests.push({
+                    updateDimensionProperties: {
+                        range: {
+                            sheetId: newId,
+                            dimension: 'COLUMNS',
+                            startIndex: widthColIdx,
+                            endIndex: widthColIdx + 1,
+                        },
+                        properties: { pixelSize: 120 },
+                        fields: 'pixelSize',
+                    },
+                });
                 widthColIdx += 1;
             } else {
                 requests.push({
