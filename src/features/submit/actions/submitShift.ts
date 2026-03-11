@@ -70,11 +70,13 @@ export const submitShift = async (
             startCell.value = entry.startValue ?? '';
             startCell.horizontalAlignment = 'CENTER';
             startCell.verticalAlignment = 'MIDDLE';
+            startCell.textFormat = { fontSize: 15 };
 
             const endCell = sheet.getCell(staffRow, entry.endCol);
             endCell.value = entry.endValue ?? '';
             endCell.horizontalAlignment = 'CENTER';
             endCell.verticalAlignment = 'MIDDLE';
+            endCell.textFormat = { fontSize: 15 };
         }
 
         await sheet.saveUpdatedCells();
