@@ -3,6 +3,7 @@
 import { getGoogleSheets } from '@/lib/GoogleSheets/google';
 import { verifySubmitToken } from '@/lib/jose/jwt';
 import { deleteTokenFromStore } from '@/lib/GoogleSheets/tokenStore';
+import { savePreviousSubmit } from '@/lib/GoogleSheets/savePreviousSubmit';
 
 export type ShiftEntry = {
     startCol: number;
@@ -81,6 +82,19 @@ export const submitShift = async (
 
         await sheet.saveUpdatedCells();
 
+        // 提出データのスナップショットを PreviousSubmit シートに保存（ベストエフォート）
+        try {
+            // Row 3（日にち行）から各シフトの日付を読み取る
+            const dates = shifts.map((entry) => {
+                const cell = sheet.getCell(3, entry.startCol);
+                return cell.value !== null ? String(cell.value) : '';
+            });
+            await savePreviousSubmit(sheetName, staffName, shifts, dates);
+        } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error('Failed to save previous submit:', e);
+        }
+
         return { success: true };
     } catch (error) {
         // eslint-disable-next-line no-console
@@ -88,3 +102,4 @@ export const submitShift = async (
         return { success: false, error: 'シフトの提出に失敗しました' };
     }
 };
+

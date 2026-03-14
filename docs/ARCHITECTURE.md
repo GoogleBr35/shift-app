@@ -43,6 +43,7 @@ flowchart TD
         J --- J2["MemberList シート"]
         J --- J3["期間別シフトシート"]
         J --- J4["TokenStore シート"]
+        J --- J5["PreviousSubmit シート"]
     end
 
     C -.->|読取| J1
@@ -51,6 +52,7 @@ flowchart TD
     D -.->|読取/書込| J2
     H -.->|読取| J2
     I -.->|書込| J3
+    I -.->|書込| J5
     K -.->|読取| J3
     K1 -.->|読取| J3
     K1 -.->|読取/書込| J4
@@ -99,7 +101,8 @@ src/
 │   │   ├── getSheetToken.ts    #     シート別JWTの取得・生成
 │   │   ├── tokenStore.ts       #     TokenStore シート操作 (CRUD)
 │   │   ├── getSubmissionStatus.ts #  提出状況・シート一覧取得
-│   │   └── getStaffShift.ts    #     個人の提出済みシフト取得
+│   │   ├── getStaffShift.ts    #     個人の提出済みシフト取得
+│   │   └── savePreviousSubmit.ts #   提出時スナップショット保存
 │   └── jose/
 │       └── jwt.ts              #     JWT 生成/検証
 │
