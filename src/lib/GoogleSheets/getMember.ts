@@ -66,5 +66,6 @@ const fetchMember = async (): Promise<MemberData> => {
 
 export const getMember = unstable_cache(fetchMember, ['member-list'], {
     tags: ['member-list'],
+    revalidate: 345600, // 4日（秒）
 });
 
