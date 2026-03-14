@@ -3,6 +3,7 @@
 import { getGoogleSheets } from '@/lib/GoogleSheets/google';
 import { getMember } from '@/lib/GoogleSheets/getMember';
 import { signSubmitToken } from '@/lib/jose/jwt';
+import { revalidateTag } from 'next/cache';
 import { format, eachDayOfInterval, isMonday, getDay, parseISO } from 'date-fns';
 
 // ============================================================
@@ -529,6 +530,9 @@ export const createShiftSheet = async (startDateStr: string, endDateStr: string)
         } else {
             await tokenSheet.addRow({ sheetName, token });
         }
+
+        // メンバーリストのキャッシュを無効化（次回アクセス時に最新データを取得）
+        revalidateTag('member-list', 'default');
 
         return { success: true, sheetName, token };
     } catch (error) {
