@@ -62,7 +62,7 @@ export const submitShift = async (
         }
 
         if (staffRow === -1) {
-            return { success: false, error: 'スタッフが見つかりません' };
+            return { success: false, error: 'スタッフ名が見つかりません！ お手数ですがシフト作成者に直接連絡してください！' };
         }
 
         // 各シフト値を書き込み（入り列・上がり列）
