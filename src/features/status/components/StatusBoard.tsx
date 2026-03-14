@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import type { MemberStatus } from '@/lib/GoogleSheets/getSubmissionStatus';
+import { getPreviousSubmit } from '@/lib/GoogleSheets/getPreviousSubmit';
+import type { PreviousShift } from '@/lib/GoogleSheets/getPreviousSubmit';
+import { ShiftDetailModal } from './ShiftDetailModal';
 
 type StatusBoardProps = {
     sheetName: string;
@@ -11,6 +14,8 @@ type StatusBoardProps = {
 
 export const StatusBoard = ({ sheetName, members, shareUrl }: StatusBoardProps) => {
     const [copied, setCopied] = useState(false);
+    const [modalData, setModalData] = useState<{ staffName: string; shifts: PreviousShift[] } | null>(null);
+    const [loadingName, setLoadingName] = useState<string | null>(null);
 
     const dateRange = sheetName.replace('_', ' 〜 ');
     const submittedCount = members.filter((m) => m.submitted).length;
@@ -23,6 +28,22 @@ export const StatusBoard = ({ sheetName, members, shareUrl }: StatusBoardProps) 
             setTimeout(() => setCopied(false), 2000);
         } catch {
             alert('コピーに失敗しました');
+        }
+    };
+
+    const handleViewShift = async (staffName: string) => {
+        setLoadingName(staffName);
+        try {
+            const shifts = await getPreviousSubmit(sheetName, staffName);
+            if (shifts && shifts.length > 0) {
+                setModalData({ staffName, shifts });
+            } else {
+                alert('提出データが見つかりません');
+            }
+        } catch {
+            alert('データの取得に失敗しました');
+        } finally {
+            setLoadingName(null);
         }
     };
 
@@ -47,9 +68,22 @@ export const StatusBoard = ({ sheetName, members, shareUrl }: StatusBoardProps) 
                             <span className="text-base font-medium text-gray-700">
                                 {m.name}
                             </span>
-                            <span className="text-xl">
-                                {m.submitted ? '✅' : '❌'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => handleViewShift(m.name)}
+                                    disabled={!m.submitted || loadingName === m.name}
+                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors
+                                        ${m.submitted
+                                            ? 'bg-gray-800 text-white hover:bg-gray-900 active:bg-gray-700'
+                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                        }`}
+                                >
+                                    {loadingName === m.name ? '...' : '確認'}
+                                </button>
+                                <span className="text-xl">
+                                    {m.submitted ? '✅' : '❌'}
+                                </span>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -75,6 +109,15 @@ export const StatusBoard = ({ sheetName, members, shareUrl }: StatusBoardProps) 
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* Shift Detail Modal */}
+            {modalData && (
+                <ShiftDetailModal
+                    staffName={modalData.staffName}
+                    shifts={modalData.shifts}
+                    onClose={() => setModalData(null)}
+                />
             )}
         </div>
     );

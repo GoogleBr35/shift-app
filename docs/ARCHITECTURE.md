@@ -90,7 +90,7 @@ src/
 │   │   ├── actions/            #     submitShift Server Action
 │   │   └── components/         #     NameSelector, ShiftInput, SubmissionComplete
 │   └── status/                 #   提出状況確認機能（管理者用）
-│       └── components/         #     StatusBoard
+│       └── components/         #     StatusBoard, ShiftDetailModal
 │
 ├── lib/                        # 共有ライブラリ
 │   ├── GoogleSheets/
@@ -102,7 +102,8 @@ src/
 │   │   ├── tokenStore.ts       #     TokenStore シート操作 (CRUD)
 │   │   ├── getSubmissionStatus.ts #  提出状況・シート一覧取得
 │   │   ├── getStaffShift.ts    #     個人の提出済みシフト取得
-│   │   └── savePreviousSubmit.ts #   提出時スナップショット保存
+│   │   ├── savePreviousSubmit.ts #   提出時スナップショット保存
+│   │   └── getPreviousSubmit.ts #   提出時スナップショット取得
 │   └── jose/
 │       └── jwt.ts              #     JWT 生成/検証
 │
