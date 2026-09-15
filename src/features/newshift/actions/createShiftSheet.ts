@@ -512,7 +512,7 @@ export const createShiftSheet = async (startDateStr: string, endDateStr: string)
         // --------------------------------------------------
         // 6. 提出用トークンの生成と保存
         // --------------------------------------------------
-        const token = await signSubmitToken(sheetName, 3);
+        const token = await signSubmitToken(sheetName, 5);
 
         let tokenSheet = doc.sheetsByTitle['TokenStore'];
         if (!tokenSheet) {
